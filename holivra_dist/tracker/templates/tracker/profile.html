@@ -1,0 +1,972 @@
+{% extends 'tracker/base.html' %}
+
+{% block content %}
+<style>
+    .profile-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .profile-header h1 {
+        background: linear-gradient(135deg, #fff 0%, var(--primary-red) 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        font-size: 2.5rem;
+        margin: 0;
+    }
+    
+    .profile-stats {
+        display: flex;
+        gap: 1.5rem;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 1rem 1.5rem;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .stat {
+        text-align: center;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary-red);
+        line-height: 1;
+    }
+    
+    .stat-label {
+        font-size: 0.875rem;
+        color: rgba(255, 255, 255, 0.7);
+        margin-top: 0.25rem;
+    }
+    
+    /* Main Profile Layout */
+    .profile-layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin-top: 1rem;
+    }
+    
+    @media (max-width: 992px) {
+        .profile-layout {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    /* Edit Profile Card */
+    .edit-profile-card {
+        background: linear-gradient(135deg, 
+            rgba(30, 30, 46, 0.9) 0%,
+            rgba(67, 97, 238, 0.1) 100%);
+        border-radius: 20px;
+        padding: 2.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+    }
+    
+    .edit-profile-card h2 {
+        color: white;
+        font-size: 1.75rem;
+        margin: 0 0 1.5rem 0;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .edit-profile-card h2 i {
+        color: var(--primary-red);
+    }
+    
+    /* Form Grid */
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .form-group label {
+        color: white;
+        font-weight: 500;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 0.95rem;
+    }
+    
+    .form-group label i {
+        color: var(--primary-red);
+        width: 20px;
+        text-align: center;
+    }
+    
+    .modern-input, .modern-select {
+        width: 100%;
+        padding: 0.875rem 1rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        color: white;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .modern-input:focus, .modern-select:focus {
+        outline: none;
+        border-color: var(--primary-red);
+        box-shadow: 0 0 0 3px rgba(230, 57, 70, 0.1);
+    }
+    
+    .modern-input::placeholder {
+        color: rgba(255, 255, 255, 0.5);
+    }
+    
+    .input-with-unit {
+        position: relative;
+    }
+    
+    .input-unit {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 0.9rem;
+        pointer-events: none;
+    }
+    
+    /* Submit Button */
+    .btn-submit {
+        background: linear-gradient(135deg, var(--primary-red), #d62839);
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        width: 100%;
+        transition: all 0.3s ease;
+        margin-top: 1rem;
+    }
+    
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(230, 57, 70, 0.3);
+    }
+    
+    /* Profile Summary Card */
+    .summary-card {
+        background: linear-gradient(135deg, 
+            rgba(30, 30, 46, 0.9) 0%,
+            rgba(67, 97, 238, 0.1) 100%);
+        border-radius: 20px;
+        padding: 2.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        height: fit-content;
+    }
+    
+    .summary-card h2 {
+        color: white;
+        font-size: 1.75rem;
+        margin: 0 0 1.5rem 0;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .summary-card h2 i {
+        color: var(--primary-red);
+    }
+    
+    .profile-avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-red), #d62839);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 2rem;
+        font-size: 3rem;
+        color: white;
+        border: 4px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .profile-details {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    @media (max-width: 576px) {
+        .profile-details {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    .detail-item {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 1.25rem;
+        border-left: 3px solid var(--primary-red);
+        transition: all 0.3s ease;
+    }
+    
+    .detail-item:hover {
+        background: rgba(230, 57, 70, 0.1);
+        transform: translateX(4px);
+    }
+    
+    .detail-label {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .detail-label i {
+        color: var(--primary-red);
+        font-size: 0.9rem;
+    }
+    
+    .detail-value {
+        color: white;
+        font-size: 1.5rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+    
+    .detail-unit {
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 1rem;
+        margin-left: 0.25rem;
+        font-weight: 400;
+    }
+    
+    /* Goals Section */
+    .goals-section {
+        background: linear-gradient(135deg, 
+            rgba(230, 57, 70, 0.15) 0%,
+            rgba(230, 57, 70, 0.05) 100%);
+        border-radius: 16px;
+        padding: 1.5rem;
+        border: 1px solid rgba(230, 57, 70, 0.3);
+        margin-top: 2rem;
+    }
+    
+    .goals-section h3 {
+        color: white;
+        font-size: 1.2rem;
+        margin: 0 0 1rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .goals-section h3 i {
+        color: var(--primary-red);
+    }
+    
+    .goal-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .goal-item:last-child {
+        border-bottom: none;
+    }
+    
+    .goal-label {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .goal-value {
+        color: white;
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+    
+    .goal-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .goal-badge.maintain { background: rgba(67, 97, 238, 0.2); color: var(--blue); }
+    .goal-badge.lose { background: rgba(230, 57, 70, 0.2); color: var(--primary-red); }
+    .goal-badge.gain { background: rgba(76, 201, 240, 0.2); color: var(--teal); }
+    
+    /* Health Metrics */
+    .health-metrics {
+        background: linear-gradient(135deg, 
+            rgba(67, 97, 238, 0.15) 0%,
+            rgba(67, 97, 238, 0.05) 100%);
+        border-radius: 16px;
+        padding: 1.5rem;
+        border: 1px solid rgba(67, 97, 238, 0.3);
+        margin-top: 2rem;
+    }
+    
+    .health-metrics h3 {
+        color: white;
+        font-size: 1.2rem;
+        margin: 0 0 1rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .health-metrics h3 i {
+        color: var(--blue);
+    }
+    
+    .bmi-display {
+        text-align: center;
+        padding: 1.5rem;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        margin-bottom: 1rem;
+    }
+    
+    .bmi-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: white;
+        line-height: 1;
+        margin-bottom: 0.5rem;
+    }
+    
+    .bmi-category {
+        color: var(--primary-red);
+        font-weight: 600;
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .bmi-bar {
+        height: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+        margin: 1.5rem 0 0.5rem;
+        position: relative;
+    }
+    
+    .bmi-indicator {
+        height: 100%;
+        background: linear-gradient(90deg, var(--teal), var(--blue), var(--primary-red));
+        border-radius: 4px;
+        width: var(--bmi-percentage, 50%);
+    }
+    
+    .bmi-marker {
+        position: absolute;
+        top: 10px;
+        transform: translateX(-50%);
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 0.75rem;
+    }
+    
+    /* Success Message */
+    .success-message {
+        background: linear-gradient(135deg, 
+            rgba(76, 201, 240, 0.15) 0%,
+            rgba(76, 201, 240, 0.05) 100%);
+        border-radius: 16px;
+        padding: 1.5rem;
+        border: 1px solid rgba(76, 201, 240, 0.3);
+        margin-top: 2rem;
+        display: none;
+    }
+    
+    .success-message.show {
+        display: block;
+        animation: slideIn 0.5s ease;
+    }
+    
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .success-content {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .success-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--teal), var(--blue));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        flex-shrink: 0;
+    }
+    
+    .success-text h4 {
+        color: white;
+        margin: 0 0 0.5rem 0;
+        font-size: 1.1rem;
+    }
+    
+    .success-text p {
+        color: rgba(255, 255, 255, 0.8);
+        margin: 0;
+        font-size: 0.95rem;
+    }
+</style>
+
+<!-- Header Section -->
+<div class="profile-header">
+    <div>
+        <h1>Account Profile</h1>
+        <p style="color: rgba(255, 255, 255, 0.7); margin-top: 0.5rem;">
+            Manage your personal information and fitness goals
+        </p>
+    </div>
+    
+    <div class="profile-stats">
+        <div class="stat">
+            <div class="stat-value">
+                {% if profile.age %}
+                    {{ profile.age }}
+                {% else %}
+                    --
+                {% endif %}
+            </div>
+            <div class="stat-label">Age</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value">
+                {% if profile.weight %}
+                    {{ profile.weight }}
+                {% else %}
+                    --
+                {% endif %}
+            </div>
+            <div class="stat-label">Weight</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value">
+                {% if profile.height %}
+                    {{ profile.height }}
+                {% else %}
+                    --
+                {% endif %}
+            </div>
+            <div class="stat-label">Height</div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Layout -->
+<div class="profile-layout">
+    <!-- Edit Profile Form -->
+    <div class="edit-profile-card">
+        <h2><i class="fas fa-user-edit"></i> Edit Profile</h2>
+        
+        <form method="post" id="profile-form">
+            {% csrf_token %}
+            
+            <div class="form-grid">
+                <!-- Age -->
+                <div class="form-group">
+                    <label><i class="fas fa-birthday-cake"></i> Age</label>
+                    <div class="input-with-unit">
+                        {{ form.age }}
+                        <span class="input-unit">years</span>
+                    </div>
+                    {% if form.age.errors %}
+                        <div style="color: var(--primary-red); font-size: 0.875rem; margin-top: 0.5rem;">
+                            {{ form.age.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Height -->
+                <div class="form-group">
+                    <label><i class="fas fa-ruler-vertical"></i> Height</label>
+                    <div class="input-with-unit">
+                        {{ form.height }}
+                        <span class="input-unit">cm</span>
+                    </div>
+                    {% if form.height.errors %}
+                        <div style="color: var(--primary-red); font-size: 0.875rem; margin-top: 0.5rem;">
+                            {{ form.height.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Weight -->
+                <div class="form-group">
+                    <label><i class="fas fa-weight"></i> Weight</label>
+                    <div class="input-with-unit">
+                        {{ form.weight }}
+                        <span class="input-unit">kg</span>
+                    </div>
+                    {% if form.weight.errors %}
+                        <div style="color: var(--primary-red); font-size: 0.875rem; margin-top: 0.5rem;">
+                            {{ form.weight.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Sex -->
+                <div class="form-group">
+                    <label><i class="fas fa-venus-mars"></i> Sex</label>
+                    {{ form.sex }}
+                    {% if form.sex.errors %}
+                        <div style="color: var(--primary-red); font-size: 0.875rem; margin-top: 0.5rem;">
+                            {{ form.sex.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Activity Level -->
+                <div class="form-group">
+                    <label><i class="fas fa-running"></i> Activity Level</label>
+                    {{ form.activity_level }}
+                    {% if form.activity_level.errors %}
+                        <div style="color: var(--primary-red); font-size: 0.875rem; margin-top: 0.5rem;">
+                            {{ form.activity_level.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Goal -->
+                <div class="form-group">
+                    <label><i class="fas fa-bullseye"></i> Goal</label>
+                    {{ form.goal }}
+                    {% if form.goal.errors %}
+                        <div style="color: var(--primary-red); font-size: 0.875rem; margin-top: 0.5rem;">
+                            {{ form.goal.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Goal Rate -->
+                <div class="form-group">
+                    <label><i class="fas fa-tachometer-alt"></i> Goal Rate</label>
+                    <div class="input-with-unit">
+                        {{ form.goal_rate }}
+                        <span class="input-unit">%</span>
+                    </div>
+                    {% if form.goal_rate.errors %}
+                        <div style="color: var(--primary-red); font-size: 0.875rem; margin-top: 0.5rem;">
+                            {{ form.goal_rate.errors }}
+                        </div>
+                    {% endif %}
+                    <small style="color: rgba(255, 255, 255, 0.6); margin-top: 0.5rem; font-size: 0.875rem;">
+                        Positive for weight gain, negative for weight loss
+                    </small>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn-submit">
+                <i class="fas fa-save"></i>
+                Save Profile Changes
+            </button>
+        </form>
+        
+        <!-- Success Message -->
+        <div id="success-message" class="success-message">
+            <div class="success-content">
+                <div class="success-icon">
+                    <i class="fas fa-check"></i>
+                </div>
+                <div class="success-text">
+                    <h4>Profile Updated Successfully!</h4>
+                    <p>Your changes have been saved. Your calorie targets will be recalculated based on your new profile information.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Profile Summary -->
+    <div class="summary-card">
+        <h2><i class="fas fa-user-circle"></i> Profile Summary</h2>
+        
+        <div class="profile-avatar">
+            <i class="fas fa-user"></i>
+        </div>
+        
+        <div class="profile-details">
+            <div class="detail-item">
+                <div class="detail-label">
+                    <i class="fas fa-birthday-cake"></i> Age
+                </div>
+                <div class="detail-value">
+                    {% if profile.age %}
+                        {{ profile.age }}
+                    {% else %}
+                        --
+                    {% endif %}
+                    <span class="detail-unit">years</span>
+                </div>
+            </div>
+            
+            <div class="detail-item">
+                <div class="detail-label">
+                    <i class="fas fa-ruler-vertical"></i> Height
+                </div>
+                <div class="detail-value">
+                    {% if profile.height %}
+                        {{ profile.height }}
+                    {% else %}
+                        --
+                    {% endif %}
+                    <span class="detail-unit">cm</span>
+                </div>
+            </div>
+            
+            <div class="detail-item">
+                <div class="detail-label">
+                    <i class="fas fa-weight"></i> Weight
+                </div>
+                <div class="detail-value">
+                    {% if profile.weight %}
+                        {{ profile.weight }}
+                    {% else %}
+                        --
+                    {% endif %}
+                    <span class="detail-unit">kg</span>
+                </div>
+            </div>
+            
+            <div class="detail-item">
+                <div class="detail-label">
+                    <i class="fas fa-venus-mars"></i> Sex
+                </div>
+                <div class="detail-value">
+                    {% if profile.sex %}
+                        {{ profile.sex|title }}
+                    {% else %}
+                        --
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="detail-item">
+                <div class="detail-label">
+                    <i class="fas fa-running"></i> Activity
+                </div>
+                <div class="detail-value">
+                    {% if profile.activity_level %}
+                        {{ profile.activity_level|title }}
+                    {% else %}
+                        --
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="detail-item">
+                <div class="detail-label">
+                    <i class="fas fa-fire"></i> Multiplier
+                </div>
+                <div class="detail-value">
+                    {% if profile.activity_level %}
+                        {% if profile.activity_level == "sedentary" %}1.2
+                        {% elif profile.activity_level == "light" %}1.375
+                        {% elif profile.activity_level == "moderate" %}1.55
+                        {% elif profile.activity_level == "active" %}1.725
+                        {% elif profile.activity_level == "very active" %}1.9
+                        {% else %}--
+                        {% endif %}
+                    {% else %}
+                        --
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Goals Section -->
+        <div class="goals-section">
+            <h3><i class="fas fa-bullseye"></i> Fitness Goals</h3>
+            
+            <div class="goal-item">
+                <span class="goal-label">
+                    <i class="fas fa-flag"></i> Primary Goal
+                </span>
+                <span class="goal-value">
+                    {% if profile.goal %}
+                        <span class="goal-badge {{ profile.goal }}">
+                            {{ profile.goal|title }}
+                        </span>
+                    {% else %}
+                        --
+                    {% endif %}
+                </span>
+            </div>
+            
+            <div class="goal-item">
+                <span class="goal-label">
+                    <i class="fas fa-tachometer-alt"></i> Goal Rate
+                </span>
+                <span class="goal-value">
+                    {% if profile.goal_rate %}
+                        {% if profile.goal_rate > 0 %}+{% endif %}{{ profile.goal_rate }}%
+                    {% else %}
+                        0%
+                    {% endif %}
+                </span>
+            </div>
+            
+            <div class="goal-item">
+                <span class="goal-label">
+                    <i class="fas fa-calendar-alt"></i> Member Since
+                </span>
+                <span class="goal-value">
+                    {{ user.date_joined|date:"M d, Y" }}
+                </span>
+            </div>
+        </div>
+        
+        <!-- Health Metrics -->
+        {% if profile.height and profile.weight %}
+        <div class="health-metrics" id="bmi-section">
+            <h3><i class="fas fa-heartbeat"></i> Health Metrics</h3>
+            
+            <!-- BMI Calculation will be done by JavaScript -->
+            <div class="bmi-display">
+                <div class="bmi-value" id="bmi-value">--</div>
+                <div class="bmi-category" id="bmi-category">Calculating...</div>
+                <div class="bmi-bar">
+                    <div class="bmi-indicator" id="bmi-indicator"></div>
+                    <div class="bmi-marker" style="left: 18.75%">18.5</div>
+                    <div class="bmi-marker" style="left: 62.5%">25</div>
+                    <div class="bmi-marker" style="left: 75%">30</div>
+                </div>
+                <div style="color: rgba(255,255,255,0.6); font-size:0.875rem; margin-top:0.5rem;">
+                    Body Mass Index
+                </div>
+            </div>
+            
+            <div style="color: rgba(255,255,255,0.7); font-size:0.875rem; text-align:center; line-height:1.6;">
+                <i class="fas fa-info-circle" style="color: var(--blue);"></i>
+                BMI is a general indicator. Consult a healthcare professional for personalized advice.
+            </div>
+        </div>
+        {% else %}
+        <div class="health-metrics" style="opacity: 0.7;">
+            <h3><i class="fas fa-heartbeat"></i> Health Metrics</h3>
+            <div style="text-align: center; padding: 2rem; color: rgba(255,255,255,0.7);">
+                <i class="fas fa-calculator" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                <p>Complete your height and weight information to see BMI calculation.</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    // Show success message if form was submitted
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check if we have form errors or success
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('success')) {
+            const successMessage = document.getElementById('success-message');
+            successMessage.classList.add('show');
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                successMessage.classList.remove('show');
+            }, 5000);
+        }
+        
+        // Calculate BMI using JavaScript
+        function calculateBMI() {
+            const weight = parseFloat('{{ profile.weight|default:0 }}');
+            const height = parseFloat('{{ profile.height|default:0 }}');
+            
+            if (weight > 0 && height > 0) {
+                const heightM = height / 100;
+                const bmi = weight / (heightM * heightM);
+                
+                // Update BMI display
+                const bmiValue = document.getElementById('bmi-value');
+                const bmiCategory = document.getElementById('bmi-category');
+                const bmiIndicator = document.getElementById('bmi-indicator');
+                
+                if (bmiValue && bmiCategory && bmiIndicator) {
+                    bmiValue.textContent = bmi.toFixed(1);
+                    
+                    // Determine category
+                    let category = '';
+                    let color = '';
+                    
+                    if (bmi < 18.5) {
+                        category = 'Underweight';
+                        color = 'var(--teal)';
+                    } else if (bmi < 25) {
+                        category = 'Normal';
+                        color = 'var(--blue)';
+                    } else if (bmi < 30) {
+                        category = 'Overweight';
+                        color = 'var(--primary-red)';
+                    } else {
+                        category = 'Obese';
+                        color = 'var(--primary-red)';
+                    }
+                    
+                    bmiCategory.textContent = category;
+                    bmiCategory.style.color = color;
+                    
+                    // Calculate percentage for indicator (0-40 BMI scale)
+                    const percentage = Math.min(100, (bmi / 40) * 100);
+                    bmiIndicator.style.width = `${percentage}%`;
+                    
+                    // Show the BMI section
+                    document.getElementById('bmi-section').style.opacity = '1';
+                }
+            }
+        }
+        
+        // Run BMI calculation on page load
+        calculateBMI();
+        
+        // Form submission handler
+        const form = document.getElementById('profile-form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                // Show loading state
+                const submitBtn = this.querySelector('.btn-submit');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+                submitBtn.disabled = true;
+                
+                // Re-enable after 2 seconds (in case of error)
+                setTimeout(() => {
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                }, 2000);
+            });
+        }
+        
+        // Add custom styling to form fields
+        const inputs = document.querySelectorAll('.modern-input, .modern-select');
+        inputs.forEach(input => {
+            // Set initial styling
+            if (!input.value) {
+                input.style.borderColor = 'rgba(255,255,255,0.1)';
+            }
+            
+            // Add focus/blur effects
+            input.addEventListener('focus', function() {
+                this.style.borderColor = 'var(--primary-red)';
+                this.style.boxShadow = '0 0 0 3px rgba(230, 57, 70, 0.1)';
+            });
+            
+            input.addEventListener('blur', function() {
+                if (!this.value) {
+                    this.style.borderColor = 'rgba(255,255,255,0.1)';
+                }
+                this.style.boxShadow = 'none';
+            });
+            
+            // Add change event for immediate feedback
+            input.addEventListener('input', function() {
+                if (this.value) {
+                    this.style.borderColor = 'var(--primary-red)';
+                } else {
+                    this.style.borderColor = 'rgba(255,255,255,0.1)';
+                }
+            });
+        });
+        
+        // Activity level descriptions
+        const activityDescriptions = {
+            'sedentary': 'Little or no exercise, desk job',
+            'light': 'Light exercise 1-3 days/week',
+            'moderate': 'Moderate exercise 3-5 days/week',
+            'active': 'Hard exercise 6-7 days/week',
+            'very active': 'Very hard exercise & physical job'
+        };
+        
+        const activitySelect = document.querySelector('[name="activity_level"]');
+        if (activitySelect) {
+            const activityDescription = document.createElement('div');
+            activityDescription.style.color = 'rgba(255,255,255,0.7)';
+            activityDescription.style.fontSize = '0.875rem';
+            activityDescription.style.marginTop = '0.5rem';
+            activitySelect.parentNode.appendChild(activityDescription);
+            
+            function updateActivityDescription() {
+                const selectedValue = activitySelect.value;
+                activityDescription.textContent = activityDescriptions[selectedValue] || '';
+            }
+            
+            activitySelect.addEventListener('change', updateActivityDescription);
+            updateActivityDescription(); // Initial update
+        }
+        
+        // Goal rate helper
+        const goalRateInput = document.querySelector('[name="goal_rate"]');
+        if (goalRateInput) {
+            const goalRateHelper = document.createElement('div');
+            goalRateHelper.style.color = 'rgba(255,255,255,0.7)';
+            goalRateHelper.style.fontSize = '0.875rem';
+            goalRateHelper.style.marginTop = '0.5rem';
+            goalRateInput.parentNode.appendChild(goalRateHelper);
+            
+            function updateGoalRateHelper() {
+                const value = parseFloat(goalRateInput.value) || 0;
+                if (value > 0) {
+                    goalRateHelper.innerHTML = `<span style="color: var(--teal);"><i class="fas fa-arrow-up"></i> Weight gain: +${value}% calories</span>`;
+                } else if (value < 0) {
+                    goalRateHelper.innerHTML = `<span style="color: var(--primary-red);"><i class="fas fa-arrow-down"></i> Weight loss: ${value}% calories</span>`;
+                } else {
+                    goalRateHelper.innerHTML = '<span><i class="fas fa-balance-scale"></i> Maintenance: 0% change</span>';
+                }
+            }
+            
+            goalRateInput.addEventListener('input', updateGoalRateHelper);
+            updateGoalRateHelper(); // Initial update
+        }
+    });
+</script>
+{% endblock %}

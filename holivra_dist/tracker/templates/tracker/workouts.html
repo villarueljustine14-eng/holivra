@@ -1,0 +1,774 @@
+{% extends 'tracker/base.html' %}
+
+{% block content %}
+<style>
+    .workout-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .workout-header h1 {
+        background: linear-gradient(135deg, #fff 0%, var(--primary-red) 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        font-size: 2.5rem;
+        margin: 0;
+    }
+    
+    .workout-stats {
+        display: flex;
+        gap: 1.5rem;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 1rem 1.5rem;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .stat {
+        text-align: center;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary-red);
+        line-height: 1;
+    }
+    
+    .stat-label {
+        font-size: 0.875rem;
+        color: rgba(255, 255, 255, 0.7);
+        margin-top: 0.25rem;
+    }
+    
+    /* Workout Cards Grid */
+    .workout-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 1.5rem;
+        margin: 2rem 0;
+    }
+    
+    .workout-card {
+        background: linear-gradient(135deg, 
+            rgba(30, 30, 46, 0.9) 0%,
+            rgba(67, 97, 238, 0.1) 100%);
+        border-radius: 20px;
+        padding: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .workout-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        border-color: var(--primary-red);
+    }
+    
+    .workout-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary-red), #d62839);
+    }
+    
+    .workout-header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1.5rem;
+    }
+    
+    .workout-title {
+        flex: 1;
+    }
+    
+    .workout-title h3 {
+        color: white;
+        font-size: 1.5rem;
+        margin: 0 0 0.5rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .workout-type {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(230, 57, 70, 0.2);
+        color: var(--primary-red);
+        padding: 0.4rem 1rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+    
+    .workout-meta {
+        display: flex;
+        gap: 1.5rem;
+        margin-top: 1rem;
+    }
+    
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: rgba(255, 255, 255, 0.8);
+    }
+    
+    .meta-item i {
+        color: var(--primary-red);
+    }
+    
+    .workout-difficulty {
+        display: flex;
+        gap: 0.25rem;
+        margin-top: 1rem;
+    }
+    
+    .difficulty-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .difficulty-dot.active {
+        background: var(--primary-red);
+    }
+    
+    .workout-preview {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 1rem;
+        margin-top: 1.5rem;
+        border-left: 3px solid var(--primary-red);
+    }
+    
+    .workout-preview h4 {
+        color: white;
+        font-size: 1rem;
+        margin: 0 0 0.75rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .preview-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .preview-list li {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.5rem 0;
+        color: rgba(255, 255, 255, 0.8);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    .preview-list li:last-child {
+        border-bottom: none;
+    }
+    
+    .preview-list li i {
+        color: var(--primary-red);
+        font-size: 0.875rem;
+    }
+    
+    .workout-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+    
+    .btn-view {
+        background: linear-gradient(135deg, var(--primary-red), #d62839);
+        color: white;
+        border: none;
+        padding: 0.875rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        transition: all 0.3s ease;
+        flex: 1;
+        justify-content: center;
+    }
+    
+    .btn-view:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(230, 57, 70, 0.3);
+    }
+    
+    .btn-save {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 0.875rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-save:hover {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: var(--primary-red);
+    }
+    
+    /* Tips Card */
+    .tips-card {
+        background: linear-gradient(135deg, 
+            rgba(30, 30, 46, 0.9) 0%,
+            rgba(67, 97, 238, 0.1) 100%);
+        border-radius: 20px;
+        padding: 2.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        margin-top: 2rem;
+    }
+    
+    .tips-card h2 {
+        color: white;
+        font-size: 1.75rem;
+        margin: 0 0 1.5rem 0;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .tips-card h2 i {
+        color: var(--primary-red);
+    }
+    
+    .tips-list {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 2rem 0;
+    }
+    
+    .tips-list li {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .tips-list li:last-child {
+        border-bottom: none;
+    }
+    
+    .tip-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, 
+            rgba(230, 57, 70, 0.2) 0%,
+            rgba(230, 57, 70, 0.1) 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary-red);
+        flex-shrink: 0;
+    }
+    
+    .tip-content {
+        flex: 1;
+    }
+    
+    .tip-content h4 {
+        color: white;
+        margin: 0 0 0.5rem 0;
+        font-size: 1.1rem;
+    }
+    
+    .tip-content p {
+        color: rgba(255, 255, 255, 0.8);
+        margin: 0;
+        line-height: 1.6;
+    }
+    
+    /* Activity Level Indicator */
+    .activity-indicator {
+        background: linear-gradient(135deg, 
+            rgba(230, 57, 70, 0.15) 0%,
+            rgba(230, 57, 70, 0.05) 100%);
+        border-radius: 16px;
+        padding: 1.5rem;
+        border: 1px solid rgba(230, 57, 70, 0.3);
+        margin-top: 2rem;
+    }
+    
+    .activity-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .activity-header h3 {
+        color: white;
+        font-size: 1.2rem;
+        margin: 0;
+    }
+    
+    .activity-level {
+        background: rgba(230, 57, 70, 0.2);
+        color: var(--primary-red);
+        padding: 0.4rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    
+    .activity-description {
+        color: rgba(255, 255, 255, 0.8);
+        line-height: 1.6;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .workout-header {
+            flex-direction: column;
+            gap: 1.5rem;
+            align-items: flex-start;
+        }
+        
+        .workout-stats {
+            width: 100%;
+            justify-content: space-around;
+        }
+        
+        .workout-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .workout-header-content {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .workout-actions {
+            flex-direction: column;
+        }
+    }
+    
+    /* Animation */
+    .workout-card {
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+</style>
+
+<!-- Header Section -->
+<div class="workout-header">
+    <div>
+        <h1>Workout Suggestions</h1>
+        <p style="color: rgba(255, 255, 255, 0.7); margin-top: 0.5rem;">
+            Personalized workouts based on your profile and goals
+        </p>
+    </div>
+    
+    <div class="workout-stats">
+        <div class="stat">
+            <div class="stat-value">{{ suggestions|length }}</div>
+            <div class="stat-label">Workouts</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value">
+                {% if suggestions %}
+                    {% with avg=suggestions|length|default:0 %}
+                        {{ avg }}
+                    {% endwith %}
+                {% else %}
+                    0
+                {% endif %}
+            </div>
+            <div class="stat-label">Available</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value">
+                {% if profile and profile.activity_level %}
+                    {{ profile.activity_level|title }}
+                {% else %}
+                    Moderate
+                {% endif %}
+            </div>
+            <div class="stat-label">Level</div>
+        </div>
+    </div>
+</div>
+
+<!-- Workout Recommendations -->
+<div class="card glass-card" style="border: none; padding: 0; background: transparent;">
+    <div style="margin-bottom: 2rem;">
+        <h2 style="color: white; font-size: 1.75rem; margin-bottom: 0.5rem;">
+            <i class="fas fa-dumbbell"></i> Recommended Workouts
+        </h2>
+        <p style="color: rgba(255, 255, 255, 0.8); margin: 0;">
+            Based on your activity level and goals, we suggest these sessions. Click any workout for detailed routine.
+        </p>
+    </div>
+    
+    <div class="workout-grid">
+        {% for w in suggestions %}
+        <div class="workout-card">
+            <div class="workout-header-content">
+                <div class="workout-title">
+                    <div class="workout-type">
+                        <i class="fas fa-{% if w.type == 'Cardio' %}running{% elif w.type == 'Strength' %}dumbbell{% else %}heartbeat{% endif %}"></i>
+                        {{ w.type }}
+                    </div>
+                    <h3>
+                        <i class="fas fa-{% if w.type == 'Cardio' %}fire{% elif w.type == 'Strength' %}weight-hanging{% else %}brain{% endif %}"></i>
+                        {{ w.name }}
+                    </h3>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 2rem; font-weight: 700; color: var(--primary-red); line-height: 1;">
+                        {{ w.time_min }}
+                    </div>
+                    <div style="font-size: 0.875rem; color: rgba(255, 255, 255, 0.7);">
+                        minutes
+                    </div>
+                </div>
+            </div>
+            
+            <div class="workout-meta">
+                <div class="meta-item">
+                    <i class="fas fa-clock"></i>
+                    <span>{{ w.time_min }} min total</span>
+                </div>
+                <div class="meta-item">
+                    <i class="fas fa-burn"></i>
+                    <span>{{ w.calories_burned|default:"300-500" }} kcal</span>
+                </div>
+                <div class="meta-item">
+                    <i class="fas fa-level-up-alt"></i>
+                    <span>{{ w.difficulty|default:"Intermediate" }}</span>
+                </div>
+            </div>
+            
+            <!-- Difficulty Indicator -->
+            <div class="workout-difficulty">
+                {% for i in "12345" %}
+                    <div class="difficulty-dot {% if forloop.counter <= w.difficulty_level|default:3 %}active{% endif %}"></div>
+                {% endfor %}
+            </div>
+            
+            <!-- Workout Preview -->
+            <div class="workout-preview">
+                <h4><i class="fas fa-eye"></i> Quick Preview</h4>
+                <ul class="preview-list">
+                    <li><i class="fas fa-play-circle"></i> Warmup: 5-10 minutes</li>
+                    <li><i class="fas fa-forward"></i> Main set: {{ w.main_time|default:"20-30" }} minutes</li>
+                    <li><i class="fas fa-stop-circle"></i> Cooldown: 5-10 minutes</li>
+                    <li><i class="fas fa-stopwatch"></i> Total: {{ w.time_min }} minutes</li>
+                </ul>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="workout-actions">
+                <button class="btn-view" onclick="showWorkoutDetails('{{ w.name|escapejs }}', '{{ w.type }}', {{ w.time_min }}, '{{ w.difficulty|default:"Intermediate" }}')">
+                    <i class="fas fa-play-circle"></i>
+                    View Full Routine
+                </button>
+                <button class="btn-save" onclick="saveWorkout('{{ w.name|escapejs }}')">
+                    <i class="fas fa-bookmark"></i>
+                    Save
+                </button>
+            </div>
+        </div>
+        {% empty %}
+        <div class="workout-card" style="grid-column: 1 / -1; text-align: center; padding: 4rem 2rem;">
+            <i class="fas fa-dumbbell" style="font-size: 3rem; color: rgba(255, 255, 255, 0.3); margin-bottom: 1.5rem;"></i>
+            <h3 style="color: white; margin-bottom: 1rem;">No Workouts Available</h3>
+            <p style="color: rgba(255, 255, 255, 0.7);">
+                Complete your profile to get personalized workout suggestions.
+            </p>
+            <button class="btn-view" onclick="window.location.href='{% url 'profile' %}'" style="margin-top: 1.5rem; max-width: 200px; margin-left: auto; margin-right: auto;">
+                <i class="fas fa-user-cog"></i>
+                Update Profile
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% if profile %}
+<!-- Tips Section -->
+<div class="tips-card">
+    <h2><i class="fas fa-lightbulb"></i> Training Tips & Guidance</h2>
+    
+    <ul class="tips-list">
+        <li>
+            <div class="tip-icon">
+                <i class="fas fa-balance-scale"></i>
+            </div>
+            <div class="tip-content">
+                <h4>Balance Your Routine</h4>
+                <p>Mix cardio and strength training 2-3 times per week for optimal results. Alternate between different muscle groups to allow proper recovery.</p>
+            </div>
+        </li>
+        
+        <li>
+            <div class="tip-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="tip-content">
+                <h4>Progressive Overload</h4>
+                <p>Gradually increase intensity, weight, or duration each week to continue making improvements and avoid plateaus in your fitness journey.</p>
+            </div>
+        </li>
+        
+        <li>
+            <div class="tip-icon">
+                <i class="fas fa-bed"></i>
+            </div>
+            <div class="tip-content">
+                <h4>Rest & Recovery</h4>
+                <p>Muscles grow during rest. Ensure 7-9 hours of quality sleep and include active recovery days in your weekly schedule for best results.</p>
+            </div>
+        </li>
+        
+        <li>
+            <div class="tip-icon">
+                <i class="fas fa-utensils"></i>
+            </div>
+            <div class="tip-content">
+                <h4>Fuel Your Workouts</h4>
+                <p>Consume a balanced meal with protein and carbs 1-2 hours before training, and refuel with protein within 30 minutes after your workout.</p>
+            </div>
+        </li>
+    </ul>
+    
+    <!-- Activity Level -->
+    <div class="activity-indicator">
+        <div class="activity-header">
+            <h3><i class="fas fa-chart-bar"></i> Your Current Activity Level</h3>
+            <span class="activity-level">{{ profile.activity_level|title }}</span>
+        </div>
+        <p class="activity-description">
+            Based on your profile settings, we've tailored these workouts to match your 
+            <strong>{{ profile.activity_level }}</strong> activity level. 
+            {% if profile.activity_level == 'sedentary' %}
+                Start with lighter workouts and gradually increase intensity as you build endurance.
+            {% elif profile.activity_level == 'light' %}
+                You're on the right track! Mix moderate workouts with active recovery days.
+            {% elif profile.activity_level == 'moderate' %}
+                Perfect balance! Keep challenging yourself while maintaining consistency.
+            {% elif profile.activity_level == 'active' %}
+                Great work! Consider adding intensity or volume to continue progressing.
+            {% elif profile.activity_level == 'very active' %}
+                Impressive dedication! Focus on recovery and periodization to prevent overtraining.
+            {% endif %}
+        </p>
+        
+        {% if profile.activity_level == 'sedentary' or profile.activity_level == 'light' %}
+        <div style="margin-top: 1rem; padding: 1rem; background: rgba(76, 201, 240, 0.1); border-radius: 12px; border-left: 3px solid var(--teal);">
+            <p style="color: rgba(255, 255, 255, 0.9); margin: 0; display: flex; align-items: center; gap: 0.75rem;">
+                <i class="fas fa-info-circle" style="color: var(--teal);"></i>
+                <strong>Tip:</strong> Start with 20-30 minute sessions and focus on consistency over intensity.
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Modal Script -->
+<script>
+    // Show workout details in a modal
+    function showWorkoutDetails(name, type, duration, difficulty) {
+        const modalContent = `
+            <div style="background: linear-gradient(135deg, rgba(30,30,46,0.95), rgba(67,97,238,0.2)); 
+                        border-radius: 20px; padding: 2rem; border: 1px solid rgba(255,255,255,0.1); 
+                        backdrop-filter: blur(10px); max-width: 600px; margin: auto;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h2 style="color: white; margin: 0; font-size: 1.75rem;">
+                        <i class="fas fa-dumbbell"></i> ${name}
+                    </h2>
+                    <div style="display: flex; gap: 0.75rem;">
+                        <span style="background: rgba(230,57,70,0.2); color: var(--primary-red); 
+                              padding: 0.4rem 1rem; border-radius: 20px; font-weight: 600; font-size: 0.9rem;">
+                            ${type}
+                        </span>
+                        <span style="background: rgba(67,97,238,0.2); color: var(--blue); 
+                              padding: 0.4rem 1rem; border-radius: 20px; font-weight: 600; font-size: 0.9rem;">
+                            ${duration} min
+                        </span>
+                    </div>
+                </div>
+                
+                <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;">
+                    <h3 style="color: white; margin: 0 0 1rem 0; font-size: 1.2rem;">
+                        <i class="fas fa-list-ol"></i> Complete Routine
+                    </h3>
+                    <div style="display: grid; gap: 1rem;">
+                        <div style="background: rgba(230,57,70,0.1); padding: 1rem; border-radius: 8px; border-left: 3px solid var(--primary-red);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                <strong style="color: white;">Warmup</strong>
+                                <span style="color: var(--primary-red); font-weight: 600;">5-10 minutes</span>
+                            </div>
+                            <p style="color: rgba(255,255,255,0.8); margin: 0; font-size: 0.95rem;">
+                                • Dynamic stretches<br>
+                                • Light cardio (jogging, jumping jacks)<br>
+                                • Mobility exercises
+                            </p>
+                        </div>
+                        
+                        <div style="background: rgba(67,97,238,0.1); padding: 1rem; border-radius: 8px; border-left: 3px solid var(--blue);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                <strong style="color: white;">Main Workout</strong>
+                                <span style="color: var(--blue); font-weight: 600;">${Math.round(duration * 0.7)}-${Math.round(duration * 0.8)} minutes</span>
+                            </div>
+                            <p style="color: rgba(255,255,255,0.8); margin: 0; font-size: 0.95rem;">
+                                • ${type === 'Cardio' ? 'Interval training or steady-state cardio' : 
+                                   type === 'Strength' ? 'Compound and isolation exercises' : 
+                                   'Bodyweight movements and core work'}<br>
+                                • Follow proper form and technique<br>
+                                • Adjust intensity based on fitness level
+                            </p>
+                        </div>
+                        
+                        <div style="background: rgba(76,201,240,0.1); padding: 1rem; border-radius: 8px; border-left: 3px solid var(--teal);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                <strong style="color: white;">Cooldown</strong>
+                                <span style="color: var(--teal); font-weight: 600;">5-10 minutes</span>
+                            </div>
+                            <p style="color: rgba(255,255,255,0.8); margin: 0; font-size: 0.95rem;">
+                                • Static stretches<br>
+                                • Deep breathing exercises<br>
+                                • Hydration and light walking
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button onclick="startWorkoutTimer('${name}', ${duration})" 
+                            style="background: linear-gradient(135deg, var(--primary-red), #d62839); 
+                                   color: white; border: none; padding: 1rem 2rem; border-radius: 12px; 
+                                   font-weight: 600; cursor: pointer; flex: 1; display: flex; 
+                                   align-items: center; justify-content: center; gap: 0.75rem;">
+                        <i class="fas fa-play"></i> Start Workout
+                    </button>
+                    <button onclick="closeModal()" 
+                            style="background: rgba(255,255,255,0.1); color: white; 
+                                   border: 1px solid rgba(255,255,255,0.2); padding: 1rem 2rem; 
+                                   border-radius: 12px; font-weight: 600; cursor: pointer;">
+                        Close
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        // Create modal
+        const modal = document.createElement('div');
+        modal.style.position = 'fixed';
+        modal.style.top = '0';
+        modal.style.left = '0';
+        modal.style.right = '0';
+        modal.style.bottom = '0';
+        modal.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+        modal.style.display = 'flex';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
+        modal.style.zIndex = '1000';
+        modal.style.padding = '1rem';
+        modal.style.backdropFilter = 'blur(5px)';
+        modal.innerHTML = modalContent;
+        
+        // Add to body
+        document.body.appendChild(modal);
+        document.body.style.overflow = 'hidden';
+        
+        // Close on background click
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+    }
+    
+    function closeModal() {
+        const modal = document.querySelector('div[style*="position: fixed"]');
+        if (modal) {
+            modal.remove();
+            document.body.style.overflow = 'auto';
+        }
+    }
+    
+    function saveWorkout(name) {
+        // Show success message
+        const toast = document.createElement('div');
+        toast.style.position = 'fixed';
+        toast.style.bottom = '20px';
+        toast.style.right = '20px';
+        toast.style.background = 'linear-gradient(135deg, var(--primary-red), #d62839)';
+        toast.style.color = 'white';
+        toast.style.padding = '1rem 1.5rem';
+        toast.style.borderRadius = '12px';
+        toast.style.boxShadow = '0 8px 24px rgba(0,0,0,0.3)';
+        toast.style.zIndex = '1000';
+        toast.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <i class="fas fa-check-circle"></i>
+                <div>
+                    <strong>Workout Saved!</strong><br>
+                    <small>${name} added to your saved workouts</small>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(toast);
+        
+        // Remove after 3 seconds
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(20px)';
+            toast.style.transition = 'all 0.3s ease';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+    
+    function startWorkoutTimer(name, duration) {
+        alert(`Starting ${name} workout timer for ${duration} minutes! 🏋️‍♂️\n\nGet ready to begin in 10 seconds...`);
+        closeModal();
+    }
+    
+    // Animate cards on load
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.workout-card');
+        cards.forEach((card, index) => {
+            setTimeout(() => {
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 100);
+        });
+    });
+</script>
+{% endblock %}

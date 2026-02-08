@@ -1,0 +1,1756 @@
+{% extends 'tracker/base.html' %}
+
+{% block content %}
+<style>
+    :root {
+        --primary-red: #e63946;
+        --red-dark: #d62839;
+        --red-light: #f2848e;
+        --blue: #4361ee;
+        --teal: #4cc9f0;
+        --yellow: #ffbe0b;
+        --green: #2ecc71;
+        --purple: #9b59b6;
+        --dark-bg: #0f0f1a;
+        --card-bg: rgba(30, 30, 46, 0.9);
+        --glass-bg: rgba(255, 255, 255, 0.05);
+        --text-light: #f8f9fa;
+        --text-muted: #adb5bd;
+        --border-color: rgba(255, 255, 255, 0.1);
+        --shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Base Layout */
+    .dashboard-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    /* Header */
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2.5rem;
+        padding: 1.5rem;
+        background: linear-gradient(135deg, var(--card-bg), rgba(67, 97, 238, 0.15));
+        border-radius: 20px;
+        border: 1px solid var(--border-color);
+        backdrop-filter: blur(10px);
+        box-shadow: var(--shadow);
+    }
+
+    /* Hide any stray ripple/outline spans that may be left behind in the header */
+    .dashboard-header span[style*="animation: ripple"] {
+        display: none !important;
+    }
+
+    .gradient-text {
+        background: linear-gradient(135deg, var(--primary-red), var(--blue));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .date-badge {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1.5rem;
+        background: linear-gradient(135deg, var(--card-bg), rgba(67, 97, 238, 0.2));
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        color: var(--text-light);
+        font-weight: 500;
+    }
+
+    /* Summary Grid */
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2.5rem;
+        width: 100%;
+        max-width: 1100px;
+    }
+
+    .summary-card {
+        background: linear-gradient(135deg, var(--card-bg), rgba(67, 97, 238, 0.1));
+        border-radius: 20px;
+        padding: 1.75rem;
+        border: 1px solid var(--border-color);
+        backdrop-filter: blur(10px);
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        min-height: 120px;
+    }
+
+    .summary-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+        border-color: var(--primary-red);
+    }
+
+    .summary-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        flex-shrink: 0;
+    }
+
+    .gradient-primary .summary-icon { 
+        background: linear-gradient(135deg, var(--primary-red), var(--red-dark));
+        color: white;
+    }
+    
+    .gradient-blue .summary-icon { 
+        background: linear-gradient(135deg, var(--blue), #4895ef);
+        color: white;
+    }
+    
+    .gradient-teal .summary-icon { 
+        background: linear-gradient(135deg, var(--teal), #38b6ff);
+        color: white;
+    }
+    
+    .gradient-yellow .summary-icon { 
+        background: linear-gradient(135deg, var(--yellow), #ffd166);
+        color: #333;
+    }
+
+    .summary-content {
+        flex: 1;
+    }
+
+    .summary-content h3 {
+        color: var(--text-muted);
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+
+    .summary-value {
+        color: var(--text-light);
+        font-size: 2.25rem;
+        font-weight: 700;
+        line-height: 1;
+        display: flex;
+        align-items: baseline;
+        gap: 0.25rem;
+    }
+
+    .summary-value span {
+        font-size: 1rem;
+        color: var(--text-muted);
+        font-weight: 400;
+    }
+
+    /* Dashboard Grid */
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin-top: 2rem;
+        width: 100%;
+        max-width: 1100px;
+    }
+
+    @media (max-width: 1200px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .dashboard-column {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    /* Cards */
+    .card {
+        background: linear-gradient(135deg, var(--card-bg), rgba(67, 97, 238, 0.1));
+        border-radius: 20px;
+        padding: 2rem;
+        border: 1px solid var(--border-color);
+        backdrop-filter: blur(10px);
+        transition: var(--transition);
+        box-shadow: var(--shadow);
+    }
+
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3);
+        border-color: var(--primary-red);
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.75rem;
+        padding-bottom: 1.25rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .card-header h2 {
+        color: var(--text-light);
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.875rem;
+        margin: 0;
+        font-weight: 600;
+    }
+
+    .badge {
+        background: linear-gradient(135deg, var(--primary-red), var(--red-dark));
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 12px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* Forms */
+    .log-form {
+        margin-top: 1rem;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.25rem;
+        margin-bottom: 1.75rem;
+    }
+
+    .form-group label {
+        color: var(--text-light);
+        font-weight: 500;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 0.9375rem;
+    }
+
+    .form-group label i {
+        color: var(--primary-red);
+        width: 20px;
+        text-align: center;
+    }
+
+    .modern-input, .modern-select {
+        width: 100%;
+        padding: 1rem 1.25rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        color: var(--text-light);
+        font-size: 1rem;
+        transition: var(--transition);
+        font-family: inherit;
+    }
+
+    .modern-input:focus, .modern-select:focus {
+        outline: none;
+        border-color: var(--primary-red);
+        box-shadow: 0 0 0 3px rgba(230, 57, 70, 0.1);
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    .modern-input::placeholder {
+        color: rgba(255, 255, 255, 0.4);
+    }
+
+    /* Buttons */
+    .btn-primary, .btn-secondary, .btn-outline {
+        padding: 1rem 2rem;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        cursor: pointer;
+        transition: var(--transition);
+        border: none;
+        text-decoration: none;
+        width: 100%;
+        font-family: inherit;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary-red), var(--red-dark));
+        color: white;
+        box-shadow: 0 4px 20px rgba(230, 57, 70, 0.3);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 32px rgba(230, 57, 70, 0.4);
+    }
+
+    .btn-secondary {
+        background: linear-gradient(135deg, var(--blue), #4895ef);
+        color: white;
+        box-shadow: 0 4px 20px rgba(67, 97, 238, 0.3);
+    }
+
+    .btn-secondary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 32px rgba(67, 97, 238, 0.4);
+    }
+
+    .btn-outline {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border-color);
+        color: var(--text-light);
+    }
+
+    .btn-outline:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: var(--primary-red);
+        transform: translateY(-2px);
+    }
+
+    /* Today's Entries Table */
+    .table-container {
+        overflow-x: auto;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border-color);
+        margin-top: 1rem;
+    }
+
+    .modern-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 600px;
+    }
+
+    .modern-table thead tr {
+        background: linear-gradient(135deg, 
+            rgba(67, 97, 238, 0.1), 
+            rgba(230, 57, 70, 0.1));
+    }
+
+    .modern-table th {
+        padding: 1.25rem 1.5rem;
+        text-align: left;
+        color: var(--text-light);
+        font-weight: 600;
+        font-size: 0.9375rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .modern-table td {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-light);
+        vertical-align: middle;
+    }
+
+    .food-cell {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .food-cell i {
+        color: var(--primary-red);
+        font-size: 1.25rem;
+    }
+
+    .calorie-badge, .protein-badge, .carb-badge, .fat-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 12px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        display: inline-block;
+        min-width: 70px;
+        text-align: center;
+    }
+
+    .calorie-badge { 
+        background: linear-gradient(135deg, rgba(230, 57, 70, 0.2), rgba(230, 57, 70, 0.1)); 
+        color: var(--red-light); 
+    }
+    
+    .protein-badge { 
+        background: linear-gradient(135deg, rgba(67, 97, 238, 0.2), rgba(67, 97, 238, 0.1)); 
+        color: #4895ef; 
+    }
+    
+    .carb-badge { 
+        background: linear-gradient(135deg, rgba(76, 201, 240, 0.2), rgba(76, 201, 240, 0.1)); 
+        color: var(--teal); 
+    }
+    
+    .fat-badge { 
+        background: linear-gradient(135deg, rgba(255, 190, 11, 0.2), rgba(255, 190, 11, 0.1)); 
+        color: var(--yellow); 
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem !important;
+        color: var(--text-muted);
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+        color: var(--primary-red);
+    }
+
+    /* Quick Actions */
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.25rem;
+        margin-top: 2.5rem;
+        margin-bottom: 1.5rem;
+        width: 100%;
+        max-width: 1100px;
+    }
+
+    .action-card {
+        background: linear-gradient(135deg, var(--card-bg), rgba(67, 97, 238, 0.1));
+        border-radius: 16px;
+        padding: 1.5rem;
+        border: 1px solid var(--border-color);
+        backdrop-filter: blur(10px);
+        transition: var(--transition);
+        text-align: center;
+        cursor: pointer;
+        text-decoration: none;
+        color: inherit;
+        display: block;
+    }
+
+    .action-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+        border-color: var(--primary-red);
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .action-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        margin: 0 auto 1rem;
+        background: linear-gradient(135deg, var(--primary-red), var(--red-dark));
+        color: white;
+    }
+
+    .action-title {
+        color: var(--text-light);
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .action-desc {
+        color: var(--text-muted);
+        font-size: 0.875rem;
+        line-height: 1.4;
+    }
+
+    /* COMPACT TDEE CALCULATOR - Updated to match screenshot */
+    .tdee-compact {
+        background: rgba(12,14,18,0.95); /* flatter dark panel */
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        border-radius: 12px;
+        padding: 1.2rem;
+        margin-top: 1rem;
+        box-shadow: none; /* remove large outer shadow */
+        backdrop-filter: none;
+        /* Keep the TDEE card visible while scrolling on wide screens */
+        position: sticky;
+        top: 96px; /* sits below header */
+        align-self: start; /* ensure it sticks within the column */
+        z-index: 20;
+    }
+
+    .tdee-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .tdee-header h3 {
+        color: var(--text-light);
+        font-size: 1.25rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin: 0;
+    }
+
+    .tdee-header h3 i {
+        color: var(--primary-red);
+    }
+
+    .tdee-badge {
+        background: linear-gradient(135deg, var(--primary-red), var(--red-dark));
+        color: white;
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .tdee-content {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 2rem;
+        align-items: start;
+    }
+
+    @media (max-width: 900px) {
+        .tdee-content {
+            grid-template-columns: 1fr;
+        }
+        /* On smaller screens let the card flow naturally (avoid covering content) */
+        .tdee-compact {
+            position: static;
+            top: auto;
+            z-index: auto;
+        }
+    }
+
+    .tdee-inputs {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    @media (max-width: 768px) {
+        .tdee-inputs {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 480px) {
+        .tdee-inputs {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .tdee-input-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .tdee-input-group label {
+        color: var(--text-muted);
+        font-size: 0.75rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .tdee-input-group label i {
+        color: var(--primary-red);
+        font-size: 0.9rem;
+    }
+
+    .tdee-input {
+        width: 100%;
+        padding: 0.75rem;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        color: var(--text-light);
+        font-size: 0.9rem;
+        transition: var(--transition);
+    }
+
+    .tdee-input:focus {
+        outline: none;
+        border-color: var(--primary-red);
+        background: rgba(255, 255, 255, 0.05);
+        box-shadow: 0 0 0 2px rgba(230, 57, 70, 0.1);
+    }
+
+    .tdee-input option {
+        background: var(--dark-bg);
+        color: var(--text-light);
+    }
+
+    /* Compact card overrides: horizontal pill inputs matching screenshot */
+    .tdee-compact .tdee-inputs {
+        display: flex;
+        gap: 0.3rem;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-bottom: 0.75rem;
+    }
+
+    .tdee-compact .tdee-input-group {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-width: 52px;
+        flex: 0 0 auto;
+    }
+
+    .tdee-compact .tdee-input-group label {
+        font-size: 0.65rem;
+        color: rgba(255,255,255,0.65);
+        margin-bottom: 0.35rem;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        text-align: center;
+    }
+
+    .tdee-compact .tdee-input {
+        min-width: 56px;
+        padding: 0.45rem 0.7rem;
+        border-radius: 999px;
+        text-align: center;
+        font-size: 0.95rem;
+        background: rgba(255,255,255,0.01);
+        border: 1px solid rgba(255,255,255,0.04);
+        box-shadow: none; /* remove inset shadow */
+    }
+
+    .tdee-compact .tdee-input:focus {
+        box-shadow: none;
+        border-color: rgba(67,97,238,0.6);
+    }
+
+    @media (max-width: 640px) {
+        .tdee-compact .tdee-inputs { gap: 0.6rem; }
+        .tdee-compact .tdee-input-group { min-width: 44px; }
+        .tdee-compact .tdee-input { min-width: 48px; padding: 0.4rem 0.6rem; }
+    }
+
+    .tdee-results {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 1.25rem;
+        min-width: 280px;
+    }
+
+    .tdee-main-result {
+        text-align: center;
+        margin-bottom: 1.25rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .tdee-result-label {
+        color: var(--text-muted);
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .tdee-result-label i {
+        color: var(--primary-red);
+    }
+
+    .tdee-result-value {
+        color: var(--text-light);
+        font-size: 2rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    .tdee-result-unit {
+        color: var(--text-muted);
+        font-size: 0.875rem;
+        margin-left: 0.25rem;
+    }
+
+    .tdee-targets {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .tdee-target {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
+        padding: 0.75rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        transition: var(--transition);
+    }
+
+    .tdee-target:hover {
+        background: rgba(255, 255, 255, 0.05);
+        transform: translateY(-2px);
+    }
+
+    .tdee-target-label {
+        color: var(--text-muted);
+        font-size: 0.75rem;
+        font-weight: 500;
+        margin-bottom: 0.4rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .tdee-target-value {
+        color: var(--text-light);
+        font-size: 1.1rem;
+        font-weight: 700;
+        line-height: 1;
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        background: linear-gradient(135deg, var(--blue), #4895ef);
+        margin-top: 0.25rem;
+    }
+
+    .tdee-target.maintain .tdee-target-value {
+        background: linear-gradient(135deg, var(--blue), #4895ef);
+    }
+
+    .tdee-target.lose-15 .tdee-target-value {
+        background: linear-gradient(135deg, var(--primary-red), var(--red-dark));
+    }
+
+    .tdee-target.lose-20 .tdee-target-value {
+        background: linear-gradient(135deg, #d63031, #e17055);
+    }
+
+    .tdee-target.gain-10 .tdee-target-value {
+        background: linear-gradient(135deg, var(--teal), #38b6ff);
+    }
+
+    .tdee-macros {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
+    }
+
+    .tdee-macro {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
+        padding: 0.75rem;
+        text-align: center;
+    }
+
+    .tdee-macro-label {
+        color: var(--text-muted);
+        font-size: 0.75rem;
+        font-weight: 500;
+        margin-bottom: 0.4rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+    }
+
+    .tdee-macro-value {
+        color: var(--text-light);
+        font-size: 1rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    .tdee-macro.protein .tdee-macro-value {
+        color: #4895ef;
+    }
+
+    .tdee-macro.fat .tdee-macro-value {
+        color: var(--yellow);
+    }
+
+    .tdee-macro.carbs .tdee-macro-value {
+        color: var(--teal);
+    }
+
+    /* Analytics Card */
+    .analytics-card {
+        position: relative;
+    }
+
+    .chart-toggle {
+        display: flex;
+        gap: 0.5rem;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 0.375rem;
+        border-radius: 12px;
+    }
+
+    .toggle-btn {
+        padding: 0.625rem 1.25rem;
+        border: none;
+        background: transparent;
+        color: var(--text-muted);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: var(--transition);
+        font-size: 0.875rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .toggle-btn.active {
+        background: linear-gradient(135deg, var(--primary-red), var(--blue));
+        color: white;
+        box-shadow: 0 4px 16px rgba(67, 97, 238, 0.3);
+    }
+
+    .chart-container {
+        position: relative;
+        min-height: 300px;
+        margin-top: 1.5rem;
+    }
+
+    /* Hide the original TDEE card */
+    .tdee-original {
+        display: none;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .dashboard-container {
+            padding: 1rem;
+        }
+
+        .dashboard-header {
+            flex-direction: column;
+            gap: 1.5rem;
+            align-items: flex-start;
+        }
+
+        .summary-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .modern-table {
+            font-size: 0.875rem;
+        }
+
+        .modern-table th,
+        .modern-table td {
+            padding: 1rem;
+        }
+    }
+
+    /* Loading States */
+    .loading {
+        opacity: 0.6;
+        pointer-events: none;
+    }
+
+    /* Success/Error Messages */
+    .alert {
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        animation: slideIn 0.3s ease;
+    }
+
+    .alert-success {
+        background: linear-gradient(135deg, 
+            rgba(46, 204, 113, 0.15), 
+            rgba(46, 204, 113, 0.05));
+        border: 1px solid rgba(46, 204, 113, 0.3);
+        color: #2ecc71;
+    }
+
+    .alert-error {
+        background: linear-gradient(135deg, 
+            rgba(230, 57, 70, 0.15), 
+            rgba(230, 57, 70, 0.05));
+        border: 1px solid rgba(230, 57, 70, 0.3);
+        color: var(--primary-red);
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+<div class="dashboard-container">
+    <!-- Header -->
+    <div class="dashboard-header">
+        <div>
+            <h1 class="gradient-text">Daily Dashboard</h1>
+            <p class="card-subtitle">Track your nutrition and fitness progress</p>
+        </div>
+       <!-- <div class="date-badge">
+            <i class="fas fa-calendar-day"></i>
+            <span>{{ today|date:"F d, Y" }}</span>
+        </div>-->
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+        <a href="{% url 'profile' %}" class="action-card">
+            <div class="action-icon">
+                <i class="fas fa-user-cog"></i>
+            </div>
+            <div class="action-title">Update Profile</div>
+            <div class="action-desc">Edit your goals and personal information</div>
+        </a>
+        
+        <div class="action-card" onclick="showFeatureComingSoon('Workout Plans')">
+            <div class="action-icon">
+                <i class="fas fa-dumbbell"></i>
+            </div>
+            <div class="action-title">Workout Plans</div>
+            <div class="action-desc">View personalized workout suggestions</div>
+        </div>
+        
+        <div class="action-card" onclick="showQuickLog()">
+            <div class="action-icon">
+                <i class="fas fa-utensils"></i>
+            </div>
+            <div class="action-title">Quick Log</div>
+            <div class="action-desc">Add a meal in seconds</div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="summary-grid">
+        <div class="summary-card gradient-primary">
+            <div class="summary-icon">
+                <i class="fas fa-fire"></i>
+            </div>
+            <div class="summary-content">
+                <h3>Calories</h3>
+                <p class="summary-value">{{ totals.total_calories|default:0|floatformat:0 }}</p>
+            </div>
+        </div>
+        
+        <div class="summary-card gradient-blue">
+            <div class="summary-icon">
+                <i class="fas fa-dumbbell"></i>
+            </div>
+            <div class="summary-content">
+                <h3>Protein</h3>
+                <p class="summary-value">{{ totals.total_protein|default:0|floatformat:1 }}<span>g</span></p>
+            </div>
+        </div>
+        
+        <div class="summary-card gradient-teal">
+            <div class="summary-icon">
+                <i class="fas fa-bread-slice"></i>
+            </div>
+            <div class="summary-content">
+                <h3>Carbs</h3>
+                <p class="summary-value">{{ totals.total_carbs|default:0|floatformat:1 }}<span>g</span></p>
+            </div>
+        </div>
+        
+        <div class="summary-card gradient-yellow">
+            <div class="summary-icon">
+                <i class="fas fa-oil-can"></i>
+            </div>
+            <div class="summary-content">
+                <h3>Fats</h3>
+                <p class="summary-value">{{ totals.total_fats|default:0|floatformat:1 }}<span>g</span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="dashboard-grid">
+        <!-- Left Column -->
+        <div class="dashboard-column">
+            <!-- Quick Log Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-plus-circle"></i> Quick Log Food</h2>
+                    <span class="badge">Fast</span>
+                </div>
+                <form method="post" class="log-form" id="food-form">
+                    {% csrf_token %}
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label><i class="fas fa-utensils"></i> Food Name</label>
+                            {{ form.food_name }}
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-fire"></i> Calories</label>
+                            {{ form.calories }}
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-dumbbell"></i> Protein (g)</label>
+                            {{ form.protein }}
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-bread-slice"></i> Carbs (g)</label>
+                            {{ form.carbs }}
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-oil-can"></i> Fats (g)</label>
+                            {{ form.fats }}
+                        </div>
+                    </div>
+                    <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-plus"></i> Add Entry
+                        </button>
+                        <button type="button" class="btn-secondary" onclick="clearForm()">
+                            <i class="fas fa-times"></i> Clear
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Today's Entries -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-list"></i> Today's Entries</h2>
+                    <span class="badge">{{ entries|length }} items</span>
+                </div>
+                <div class="table-container">
+                    <table class="modern-table">
+                        <thead>
+                            <tr>
+                                <th>Food</th>
+                                <th>Calories</th>
+                                <th>Protein</th>
+                                <th>Carbs</th>
+                                <th>Fats</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entry in entries %}
+                            <tr>
+                                <td class="food-cell">
+                                    <i class="fas fa-utensils"></i>
+                                    <span>{{ entry.food_name|truncatechars:20 }}</span>
+                                </td>
+                                <td><span class="calorie-badge">{{ entry.calories }}</span></td>
+                                <td><span class="protein-badge">{{ entry.protein }}g</span></td>
+                                <td><span class="carb-badge">{{ entry.carbs }}g</span></td>
+                                <td><span class="fat-badge">{{ entry.fats }}g</span></td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="empty-state">
+                                    <i class="fas fa-clipboard-list"></i>
+                                    <p>No entries for today yet.<br>
+                                    <small>Add your first food entry above!</small></p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if entries %}
+                <div style="margin-top: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="color: var(--text-light); font-size: 1rem; font-weight: 600;">
+                        Total: {{ totals.total_calories|default:0 }} calories
+                    </div>
+                    <button class="btn-outline" style="width: auto; padding: 0.75rem 1.5rem;" 
+                            onclick="showFeatureComingSoon('History')">
+                        <i class="fas fa-history"></i> View History
+                    </button>
+                </div>
+                {% endif %}
+
+                <!-- COMPACT TDEE CALCULATOR (moved under Today's Entries) -->
+                <div class="tdee-compact">
+                    <div class="tdee-header">
+                        <h3><i class="fas fa-calculator"></i> TDEE Calculator</h3>
+                        <span class="tdee-badge">Personalized</span>
+                    </div>
+                    
+                    <div class="tdee-content">
+                        <div>
+                            <div class="tdee-inputs">
+                                <div class="tdee-input-group">
+                                    <label><i class="fas fa-venus-mars"></i> Sex</label>
+                                    <select id="tdee-sex" class="tdee-input">
+                                        <option value="male">Male</option>
+                                        <option value="female" {% if profile.gender == "female" %}selected{% endif %}>Female</option>
+                                    </select>
+                                </div>
+                                <div class="tdee-input-group">
+                                    <label><i class="fas fa-birthday-cake"></i> Age</label>
+                                    <input id="tdee-age" type="number" min="10" max="100" value="{{ profile.age|default:25 }}" class="tdee-input">
+                                </div>
+                                <div class="tdee-input-group">
+                                    <label><i class="fas fa-ruler-vertical"></i> Height (cm)</label>
+                                    <input id="tdee-height" type="number" min="50" max="250" value="{{ profile.height|default:170 }}" class="tdee-input">
+                                </div>
+                                <div class="tdee-input-group">
+                                    <label><i class="fas fa-weight"></i> Weight (kg)</label>
+                                    <input id="tdee-weight" type="number" min="20" max="300" value="{{ profile.weight|default:70 }}" class="tdee-input">
+                                </div>
+                                <div class="tdee-input-group">
+                                    <label><i class="fas fa-running"></i> Activity</label>
+                                    <select id="tdee-activity" class="tdee-input">
+                                        <option value="1.2">Sedentary</option>
+                                        <option value="1.375">Light</option>
+                                        <option value="1.55" selected>Moderate</option>
+                                        <option value="1.725">Active</option>
+                                        <option value="1.9">Very Active</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="tdee-results">
+                            <div class="tdee-main-result">
+                                <div class="tdee-result-label">
+                                    <i class="fas fa-bolt"></i> Daily Calories
+                                </div>
+                                <div class="tdee-result-value" id="tdee-main-value">2,450</div>
+                                <div class="tdee-result-unit">kcal/day</div>
+                            </div>
+                            
+                            <div class="tdee-targets">
+                                <div class="tdee-target maintain">
+                                    <div class="tdee-target-label">Maintain</div>
+                                    <div class="tdee-target-value" id="target-maintain">2,450</div>
+                                </div>
+                                <div class="tdee-target lose-15">
+                                    <div class="tdee-target-label">Lose 15%</div>
+                                    <div class="tdee-target-value" id="target-lose15">2,083</div>
+                                </div>
+                                <div class="tdee-target lose-20">
+                                    <div class="tdee-target-label">Lose 20%</div>
+                                    <div class="tdee-target-value" id="target-lose20">1,960</div>
+                                </div>
+                                <div class="tdee-target gain-10">
+                                    <div class="tdee-target-label">Gain 10%</div>
+                                    <div class="tdee-target-value" id="target-gain10">2,695</div>
+                                </div>
+                            </div>
+                            
+                            <div class="tdee-macros">
+                                <div class="tdee-macro protein">
+                                    <div class="tdee-macro-label">
+                                        <i class="fas fa-dumbbell"></i> Protein
+                                    </div>
+                                    <div class="tdee-macro-value" id="macro-protein">112g</div>
+                                </div>
+                                <div class="tdee-macro fat">
+                                    <div class="tdee-macro-label">
+                                        <i class="fas fa-oil-can"></i> Fat
+                                    </div>
+                                    <div class="tdee-macro-value" id="macro-fat">68g</div>
+                                </div>
+                                <div class="tdee-macro carbs">
+                                    <div class="tdee-macro-label">
+                                        <i class="fas fa-bread-slice"></i> Carbs
+                                    </div>
+                                    <div class="tdee-macro-value" id="macro-carbs">245g</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="dashboard-column">
+            <!-- Analytics Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-chart-line"></i> Weekly Analytics</h2>
+                    <div class="chart-toggle">
+                        <button class="toggle-btn active" data-chart="calories">
+                            <i class="fas fa-fire"></i> Calories
+                        </button>
+                        <button class="toggle-btn" data-chart="macros">
+                            <i class="fas fa-chart-bar"></i> Macros
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="calChart"></canvas>
+                    <canvas id="macroChart" style="display: none;"></canvas>
+                    <div id="analytics-spinner" class="chart-loader">
+                        <div class="spinner"></div>
+                        <p>Loading analytics...</p>
+                    </div>
+                </div>
+                <div style="margin-top: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="color: var(--text-muted); font-size: 0.875rem;">
+                        Last 7 days
+                    </div>
+                    <button class="btn-outline" style="width: auto; padding: 0.75rem 1.5rem;" 
+                            onclick="refreshAnalytics()">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+            </div>
+
+            <!-- Hidden original TDEE card -->
+            <div class="card tdee-original">
+                <!-- Original TDEE content removed since we have compact version -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Analytics Charts
+{% if week_labels_json and week_calories_json %}
+(function() {
+    try {
+        const labels = {{ week_labels_json|safe }} || [];
+        const calData = {{ week_calories_json|safe }} || [];
+        const protein = {{ week_protein_json|safe }} || [];
+        const carbs = {{ week_carbs_json|safe }} || [];
+        const fats = {{ week_fats_json|safe }} || [];
+
+        // Calories Chart
+        const calCtx = document.getElementById('calChart').getContext('2d');
+        const calChart = new Chart(calCtx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Calories',
+                    data: calData,
+                    fill: true,
+                    backgroundColor: 'rgba(230, 57, 70, 0.1)',
+                    borderColor: 'rgba(230, 57, 70, 0.95)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    pointRadius: 6,
+                    pointBackgroundColor: 'rgba(230, 57, 70, 0.95)',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointHoverRadius: 8,
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgba(230, 57, 70, 0.95)',
+                    pointHoverBorderWidth: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 15, 26, 0.95)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        borderColor: 'rgba(230, 57, 70, 0.5)',
+                        borderWidth: 1,
+                        padding: 12,
+                        cornerRadius: 8,
+                        displayColors: false,
+                        callbacks: {
+                            label: function(context) {
+                                return `Calories: ${context.parsed.y}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { 
+                            color: 'rgba(255, 255, 255, 0.05)',
+                            drawBorder: false
+                        },
+                        ticks: { 
+                            color: 'rgba(255, 255, 255, 0.6)',
+                            padding: 10,
+                            callback: function(value) {
+                                return value.toLocaleString();
+                            }
+                        }
+                    },
+                    x: {
+                        grid: { 
+                            color: 'rgba(255, 255, 255, 0.05)',
+                            drawBorder: false
+                        },
+                        ticks: { 
+                            color: 'rgba(255, 255, 255, 0.6)',
+                            padding: 10
+                        }
+                    }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                animation: {
+                    duration: 1000,
+                    easing: 'easeOutQuart'
+                }
+            }
+        });
+
+        // Macros Chart
+        const macroCtx = document.getElementById('macroChart').getContext('2d');
+        const macroChart = new Chart(macroCtx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Protein',
+                        data: protein,
+                        backgroundColor: 'rgba(67, 97, 238, 0.9)',
+                        borderRadius: 8,
+                        borderSkipped: false,
+                        categoryPercentage: 0.8,
+                        barPercentage: 0.9
+                    },
+                    {
+                        label: 'Carbs',
+                        data: carbs,
+                        backgroundColor: 'rgba(76, 201, 240, 0.9)',
+                        borderRadius: 8,
+                        borderSkipped: false,
+                        categoryPercentage: 0.8,
+                        barPercentage: 0.9
+                    },
+                    {
+                        label: 'Fats',
+                        data: fats,
+                        backgroundColor: 'rgba(255, 190, 11, 0.9)',
+                        borderRadius: 8,
+                        borderSkipped: false,
+                        categoryPercentage: 0.8,
+                        barPercentage: 0.9
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { 
+                            color: 'rgba(255, 255, 255, 0.7)', 
+                            padding: 20,
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 15, 26, 0.95)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                        borderWidth: 1,
+                        padding: 12,
+                        cornerRadius: 8,
+                        displayColors: true,
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: ${context.parsed.y}g`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        stacked: true,
+                        grid: { 
+                            color: 'rgba(255, 255, 255, 0.05)',
+                            drawBorder: false
+                        },
+                        ticks: { 
+                            color: 'rgba(255, 255, 255, 0.6)',
+                            padding: 10
+                        }
+                    },
+                    y: {
+                        stacked: true,
+                        beginAtZero: true,
+                        grid: { 
+                            color: 'rgba(255, 255, 255, 0.05)',
+                            drawBorder: false
+                        },
+                        ticks: { 
+                            color: 'rgba(255, 255, 255, 0.6)',
+                            padding: 10,
+                            callback: function(value) {
+                                return value + 'g';
+                            }
+                        }
+                    }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                animation: {
+                    duration: 1000,
+                    easing: 'easeOutQuart'
+                }
+            }
+        });
+
+        // Chart Toggle
+        document.querySelectorAll('.toggle-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                const chartType = btn.dataset.chart;
+                if (chartType === 'calories') {
+                    document.getElementById('calChart').style.display = 'block';
+                    document.getElementById('macroChart').style.display = 'none';
+                } else {
+                    document.getElementById('calChart').style.display = 'none';
+                    document.getElementById('macroChart').style.display = 'block';
+                }
+            });
+        });
+
+        // Hide loader
+        setTimeout(() => {
+            const spinner = document.getElementById('analytics-spinner');
+            if (spinner) spinner.style.display = 'none';
+        }, 500);
+    } catch(e) {
+        console.error('Chart initialization failed:', e);
+        const spinner = document.getElementById('analytics-spinner');
+        if (spinner) spinner.innerHTML = 
+            '<div class="alert alert-error"><i class="fas fa-exclamation-circle"></i> Error loading charts</div>';
+    }
+})();
+{% else %}
+    const spinner = document.getElementById('analytics-spinner');
+    if (spinner) spinner.innerHTML = 
+        '<div class="alert alert-error"><i class="fas fa-info-circle"></i> No analytics data available</div>';
+{% endif %}
+
+// COMPACT TDEE CALCULATOR
+(function() {
+    const elements = {
+        sex: document.getElementById('tdee-sex'),
+        age: document.getElementById('tdee-age'),
+        height: document.getElementById('tdee-height'),
+        weight: document.getElementById('tdee-weight'),
+        activity: document.getElementById('tdee-activity'),
+        mainValue: document.getElementById('tdee-main-value'),
+        maintain: document.getElementById('target-maintain'),
+        lose15: document.getElementById('target-lose15'),
+        lose20: document.getElementById('target-lose20'),
+        gain10: document.getElementById('target-gain10'),
+        protein: document.getElementById('macro-protein'),
+        fat: document.getElementById('macro-fat'),
+        carbs: document.getElementById('macro-carbs')
+    };
+
+    function formatNumber(num) {
+        return num.toLocaleString();
+    }
+
+    function computeTDEE() {
+        const sex = elements.sex.value;
+        const age = parseFloat(elements.age.value) || 25;
+        const height = parseFloat(elements.height.value) || 170;
+        const weight = parseFloat(elements.weight.value) || 70;
+        const activity = parseFloat(elements.activity.value) || 1.55;
+
+        // Mifflin-St Jeor Formula
+        let bmr = (10 * weight) + (6.25 * height) - (5 * age) + (sex === 'male' ? 5 : -161);
+        let tdee = Math.round(bmr * activity);
+        
+        // Update main TDEE value
+        animateNumber(elements.mainValue, tdee);
+        
+        // Update targets
+        const maintain = tdee;
+        const lose15 = Math.round(tdee * 0.85);
+        const lose20 = Math.round(tdee * 0.8);
+        const gain10 = Math.round(tdee * 1.1);
+        
+        animateNumber(elements.maintain, maintain);
+        animateNumber(elements.lose15, lose15);
+        animateNumber(elements.lose20, lose20);
+        animateNumber(elements.gain10, gain10);
+        
+        // Calculate macros for maintain target
+        const proteinG = Math.round(1.6 * weight);
+        const proteinCals = proteinG * 4;
+        const fatCals = Math.round(maintain * 0.25);
+        const fatG = Math.round(fatCals / 9);
+        const carbCals = Math.max(0, maintain - proteinCals - fatCals);
+        const carbG = Math.round(carbCals / 4);
+        
+        // Update macros
+        elements.protein.textContent = `${proteinG}g`;
+        elements.fat.textContent = `${fatG}g`;
+        elements.carbs.textContent = `${carbG}g`;
+    }
+
+    function animateNumber(element, target) {
+        if (!element) return;
+        
+        const current = parseInt(element.textContent.replace(/[^0-9]/g, '') || '0');
+        const diff = target - current;
+        const duration = 500;
+        const startTime = Date.now();
+        
+        function update() {
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const eased = easeOutCubic(progress);
+            const value = Math.round(current + (diff * eased));
+            
+            element.textContent = formatNumber(value);
+            
+            if (progress < 1) {
+                requestAnimationFrame(update);
+            }
+        }
+        
+        function easeOutCubic(t) {
+            return 1 - Math.pow(1 - t, 3);
+        }
+        
+        update();
+    }
+
+    // Add event listeners
+    [elements.sex, elements.age, elements.height, elements.weight, elements.activity]
+        .forEach(element => {
+            element.addEventListener('input', computeTDEE);
+            element.addEventListener('change', computeTDEE);
+        });
+
+    // Initial calculation
+    computeTDEE();
+})();
+
+// Form Handling
+(function() {
+    const form = document.getElementById('food-form');
+    
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const submitBtn = this.querySelector('.btn-primary');
+            const originalText = submitBtn.innerHTML;
+            
+            // Show loading state
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+            submitBtn.disabled = true;
+            
+            // Add a small delay to show the loading state
+            setTimeout(() => {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                
+                // Show success message
+                showAlert('Food entry added successfully!', 'success');
+                
+                // Refresh page after 1.5 seconds
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            }, 1500);
+        });
+    }
+    
+    function showAlert(message, type) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type}`;
+        alertDiv.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+            <span>${message}</span>
+        `;
+        
+        const container = document.querySelector('.dashboard-container');
+        if (container) {
+            const quickActions = document.querySelector('.quick-actions');
+            container.insertBefore(alertDiv, quickActions);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                alertDiv.style.opacity = '0';
+                alertDiv.style.transform = 'translateY(-10px)';
+                alertDiv.style.transition = 'all 0.3s ease';
+                setTimeout(() => alertDiv.remove(), 300);
+            }, 3000);
+        }
+    }
+})();
+
+// Utility Functions
+function clearForm() {
+    document.querySelectorAll('#food-form input').forEach(input => {
+        if (input.type !== 'submit') {
+            input.value = '';
+        }
+    });
+    showAlert('Form cleared', 'success');
+}
+
+function showQuickLog() {
+    const form = document.getElementById('food-form');
+    if (form) {
+        form.scrollIntoView({ 
+            behavior: 'smooth',
+            block: 'center'
+        });
+        
+        // Add highlight effect
+        form.style.boxShadow = '0 0 0 3px rgba(230, 57, 70, 0.3)';
+        form.style.transition = 'box-shadow 0.3s ease';
+        
+        setTimeout(() => {
+            form.style.boxShadow = '';
+        }, 2000);
+    }
+}
+
+function refreshAnalytics() {
+    const spinner = document.getElementById('analytics-spinner');
+    if (spinner) {
+        spinner.style.display = 'flex';
+        
+        setTimeout(() => {
+            spinner.style.display = 'none';
+            showAlert('Analytics refreshed', 'success');
+        }, 1000);
+    }
+}
+
+// Feature Coming Soon Notification
+function showFeatureComingSoon(featureName) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert alert-success';
+    alertDiv.innerHTML = `
+        <i class="fas fa-info-circle"></i>
+        <span>${featureName} feature coming soon!</span>
+    `;
+    
+    const container = document.querySelector('.dashboard-container');
+    if (container) {
+        const quickActions = document.querySelector('.quick-actions');
+        container.insertBefore(alertDiv, quickActions);
+        
+        // Remove after 3 seconds
+        setTimeout(() => {
+            alertDiv.style.opacity = '0';
+            alertDiv.style.transform = 'translateY(-10px)';
+            alertDiv.style.transition = 'all 0.3s ease';
+            setTimeout(() => alertDiv.remove(), 300);
+        }, 3000);
+    }
+}
+
+// Cleanup: remove any stray ripple/outline spans that might remain from earlier interactions
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        document.querySelectorAll('span').forEach(function(s) {
+            // remove if inline animation references ripple
+            const anim = s.style && (s.style.animation || s.style.webkitAnimation || s.style.msAnimation);
+            if (anim && anim.indexOf('ripple') !== -1) {
+                s.remove();
+                return;
+            }
+
+            // remove empty decorative spans that are tiny (likely artifacts)
+            if (!s.textContent || !s.textContent.trim()) {
+                const r = s.getBoundingClientRect();
+                if (r.width < 60 && r.height < 40) {
+                    s.remove();
+                }
+            }
+        });
+    } catch(e) {
+        // ignore
+    }
+});
+
+// Targeted header cleanup: remove tiny, empty decorative elements inside the header
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        const header = document.querySelector('.dashboard-header');
+        if (header) {
+            Array.from(header.children).forEach(function(child) {
+                // keep the main title container (has h1) and date-badge
+                if (child.querySelector && child.querySelector('h1')) return;
+                if (child.classList && child.classList.contains('date-badge')) return;
+
+                const rect = child.getBoundingClientRect();
+                const text = (child.textContent || '').trim();
+
+                // remove tiny/empty decorative nodes (likely artifacts)
+                if (!text && rect.width <= 120 && rect.height <= 60) {
+                    child.remove();
+                }
+            });
+        }
+    } catch (e) {
+        // ignore
+    }
+});
+</script>
+{% endblock %}
