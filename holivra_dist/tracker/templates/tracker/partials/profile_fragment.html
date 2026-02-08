@@ -1,0 +1,48 @@
+<div class="card">
+    <h2>Edit Profile</h2>
+    <form method="post">
+        {% csrf_token %}
+        <div style="display:grid; grid-template-columns: repeat(auto-fit,minmax(160px,1fr)); gap:10px;">
+            <div>
+                <label>Age</label>
+                {{ form.age }}
+            </div>
+            <div>
+                <label>Height (cm)</label>
+                {{ form.height }}
+            </div>
+            <div>
+                <label>Weight (kg)</label>
+                {{ form.weight }}
+            </div>
+            <div>
+                <label>Sex</label>
+                {{ form.sex }}
+            </div>
+            <div>
+                <label>Activity Level</label>
+                {{ form.activity_level }}
+            </div>
+            <div>
+                <label>Goal</label>
+                {{ form.goal }}
+            </div>
+            <div>
+                <label>Goal Rate</label>
+                {{ form.goal_rate }}
+            </div>
+        </div>
+        <button type="submit" style="margin-top:1rem;">Save Profile</button>
+    </form>
+</div>
+
+{% if profile %}
+<div class="card">
+    <h2>Profile Summary</h2>
+    <p><strong>Age:</strong> {{ profile.age }}</p>
+    <p><strong>Height:</strong> {{ profile.height }} cm</p>
+    <p><strong>Weight:</strong> {{ profile.weight }} kg</p>
+    <p><strong>Sex:</strong> {{ profile.sex }}</p>
+    <p><strong>Activity multiplier:</strong> {{ profile.activity_level }}</p>
+</div>
+{% endif %}

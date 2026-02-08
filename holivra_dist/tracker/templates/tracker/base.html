@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Holivra - Calorie Tracker</title>
+    <style>
+        :root {
+            --primary-red: #e63946;
+            --dark-black: #1a1a1a;
+            --light-gray: #f4f4f4;
+            --white: #ffffff;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--dark-black);
+            color: var(--white);
+            margin: 0;
+            padding: 0;
+        }
+        /* layout: left sidebar + main content */
+        body { display: flex; min-height: 100vh; }
+        .sidebar {
+            width: 76px;
+            background: #0f0f0f;
+            border-right: 1px solid rgba(255,255,255,0.03);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem 0;
+            gap: 14px;
+        }
+        .sidebar .logo {
+            width:44px; height:44px; border-radius:50%; background:var(--primary-red); color:white; display:flex; align-items:center; justify-content:center; font-weight:bold;
+        }
+        .sidebar a.icon-link { color: rgba(255,255,255,0.9); text-decoration:none; width:48px; height:48px; display:flex; align-items:center; justify-content:center; border-radius:8px; }
+        .sidebar a.icon-link.active, .sidebar a.icon-link:hover { background: rgba(255,255,255,0.02); box-shadow: 0 4px 10px rgba(0,0,0,0.4); }
+        .main-content { flex:1; padding: 1.25rem 1.25rem; }
+        .container { max-width: 1100px; margin: 1.25rem auto; padding: 0 1rem; }
+        .card {
+            background-color: #2a2a2a;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            margin-bottom: 2rem;
+        }
+        h1, h2 {
+            color: var(--primary-red);
+        }
+        input, select, button {
+            width: 100%;
+            padding: 0.8rem;
+            margin: 0.5rem 0;
+            border-radius: 4px;
+            border: none;
+        }
+        input {
+            background-color: #333;
+            color: white;
+        }
+        button {
+            background-color: var(--primary-red);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background-color: #c1121f;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        th, td {
+            text-align: left;
+            padding: 1rem;
+            border-bottom: 1px solid #444;
+        }
+        th {
+            color: var(--primary-red);
+        }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .summary-item {
+            background-color: #333;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .summary-item span {
+            display: block;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-red);
+        }
+        /* Hover & interactive effects */
+        .card:hover {
+            transform: translateY(-4px);
+            transition: transform 0.18s ease;
+            box-shadow: 0 8px 18px rgba(0,0,0,0.45);
+        }
+        table tr:hover {
+            background: rgba(255,255,255,0.03);
+        }
+        .summary-item:hover {
+            background: #3a3a3a;
+            cursor: default;
+        }
+        .workout-card:hover {
+            transform: scale(1.02);
+            transition: transform 0.12s ease;
+            cursor: pointer;
+        }
+        /* sidebar icon styles */
+        .sidebar a.icon-link svg { width:22px; height:22px; display:block; }
+        .sidebar a.icon-link { color: rgba(255,255,255,0.9); text-decoration:none; width:48px; height:48px; display:flex; align-items:center; justify-content:center; border-radius:8px; }
+        .sidebar a.icon-link.active, .sidebar a.icon-link:hover { background: rgba(255,255,255,0.02); box-shadow: 0 4px 10px rgba(0,0,0,0.4); }
+        .icon-label { display:none; }
+    </style>
+</head>
+<body>
+    {% load static %}
+    <aside class="sidebar">
+        <div class="logo">
+            <a href="{% url 'landing' %}" style="display:block; text-decoration:none;">
+             <img src="static/tracker/image/holivra_logo.png" alt="Test"
+                 alt="Holivra" 
+                 style="width:44px; height:44px; border-radius:50%; object-fit:cover; display:block; border: 2px solid rgba(255,255,255,0.06);" 
+                 onerror="this.onerror=null; this.src='/static/tracker/image/holivra_logo.png'; this.alt='Holivra (static fallback)';"/>
+            </a>
+        </div>
+        {% url 'landing' as landing_url %}
+        <a class="icon-link {% if request.path == landing_url %}active{% endif %}" href="{{ landing_url }}" title="Home">
+            <!-- Home SVG -->
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 11.5L12 4l9 7.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 21V12h14v9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+    {% url 'dashboard' as dashboard_url %}
+    <a class="icon-link {% if request.path == dashboard_url %}active{% endif %}" href="{{ dashboard_url }}" title="Dashboard">
+            <!-- Fork/Knife SVG -->
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M7 3v9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M11 3v9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M3 12h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </a>
+    {% url 'workouts' as workouts_url %}
+    <a class="icon-link {% if request.path == workouts_url %}active{% endif %}" href="{{ workouts_url }}" title="Workouts">
+            <!-- Dumbbell SVG -->
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2 12h4v2H2v-2zM18 12h4v2h-4v-2zM7 9h10v6H7V9z" fill="currentColor"/></svg>
+        </a>
+    {% url 'profile' as profile_url %}
+    <a class="icon-link {% if request.path == profile_url %}active{% endif %}" href="{{ profile_url }}" title="Account">
+            <!-- User SVG -->
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="8" r="3" stroke="currentColor" stroke-width="1.6"/><path d="M4 20c1.5-4 6-6 8-6s6.5 2 8 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+
+        <div style="flex:1"></div>
+        {% if not user.is_authenticated %}
+            {% url 'login' as login_url %}
+            <a class="icon-link {% if request.path == login_url %}active{% endif %}" href="{{ login_url }}" title="Login">
+                <!-- Login SVG -->
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M15 3h4v18h-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 17l5-5-5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </a>
+        {% endif %}
+    </aside>
+
+    <main class="main-content">
+        <div class="container">
+            {% block content %}{% endblock %}
+        </div>
+</main>
+
+    {# fixed logout button bottom-left for authenticated users #}
+    {% if user.is_authenticated %}
+    <form id="global-logout-form" action="{% url 'logout' %}" method="post" style="position:fixed; left:12px; bottom:12px; z-index:999; margin:0;">
+        {% csrf_token %}
+        <button type="submit" title="Logout" style="width:48px; height:48px; border-radius:12px; border:none; background:var(--primary-red); color:white; font-size:18px; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 18px rgba(0,0,0,0.45);">⎋</button>
+    </form>
+    {% endif %}
+
+    <!-- About modal (hidden by default) -->
+    <div id="about-modal" role="dialog" aria-hidden="true" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:2000; align-items:center; justify-content:center;">
+        <div role="document" style="width:90%; max-width:740px; background:#1f1f1f; padding:1.5rem; border-radius:8px; box-shadow:0 12px 40px rgba(0,0,0,0.6); color:white;">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+                <h2 style="margin:0; color:var(--primary-red);">About Holivra</h2>
+                <button id="about-close" aria-label="Close about" style="background:none; border:none; color:white; font-size:22px;">✕</button>
+            </div>
+            <p style="color:#ddd; margin-top:0.5rem;">Holivra is a lightweight calorie and workout tracker focused on simplicity. Log foods, see daily summaries, and get personalised TDEE and workout suggestions.</p>
+            <p style="color:#ddd;">Built for quick use with a friendly interface — no clutter, privacy-friendly and easy to extend.</p>
+            <ul style="color:#ccc; margin-top:0.5rem;">
+                <li>Calorie & macro logging</li>
+                <li>Interactive TDEE calculator</li>
+                <li>Workout suggestions and progress analytics</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // show About modal when the sidebar logo is clicked
+        (function(){
+            const logo = document.querySelector('.sidebar .logo a');
+            const modal = document.getElementById('about-modal');
+            const close = document.getElementById('about-close');
+            if(logo && modal){
+                logo.addEventListener('click', function(e){
+                    // if on the landing page, allow normal navigation; otherwise, open modal
+                    e.preventDefault();
+                    modal.style.display = 'flex';
+                    modal.setAttribute('aria-hidden', 'false');
+                });
+            }
+            if(close && modal){
+                close.addEventListener('click', function(){ modal.style.display='none'; modal.setAttribute('aria-hidden','true'); });
+            }
+            // close on escape
+            document.addEventListener('keydown', function(ev){ if(ev.key === 'Escape' && modal.style.display === 'flex'){ modal.style.display='none'; modal.setAttribute('aria-hidden','true'); } });
+        })();
+    </script>
+</body>
+</html>
+</body>
+</html>
+</body>
+</html>

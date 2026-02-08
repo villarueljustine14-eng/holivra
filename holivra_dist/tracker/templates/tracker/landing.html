@@ -1,0 +1,982 @@
+{% extends 'tracker/base.html' %}
+
+{% block content %}
+<style>
+    .hero {
+        min-height: 85vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        text-align: center;
+        padding: 4rem 1rem;
+        border-radius: 24px;
+        background: linear-gradient(135deg, 
+            rgba(10, 10, 10, 0.95) 0%, 
+            rgba(230, 57, 70, 0.4) 100%);
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 3rem;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    
+    .hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+            radial-gradient(circle at 20% 30%, rgba(230, 57, 70, 0.2) 0%, transparent 50%),
+            radial-gradient(circle at 80% 70%, rgba(67, 97, 238, 0.2) 0%, transparent 50%);
+        pointer-events: none;
+    }
+    
+    .hero-content {
+        position: relative;
+        z-index: 2;
+        max-width: 800px;
+        animation: fadeInUp 0.8s ease-out;
+    }
+    
+    .hero h1 {
+        font-size: 3.5rem;
+        margin: 0 0 1.5rem 0;
+        background: linear-gradient(135deg, #fff 0%, var(--primary-red) 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        line-height: 1.2;
+    }
+    
+    .hero p {
+        font-size: 1.3rem;
+        margin: 0 0 2.5rem 0;
+        color: rgba(255, 255, 255, 0.9);
+        line-height: 1.6;
+        max-width: 680px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .hero .cta {
+        display: flex;
+        gap: 1.2rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .hero .cta a {
+        padding: 1.2rem 2.4rem;
+        border-radius: 16px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        min-width: 180px;
+        justify-content: center;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary-red), #d62839);
+        color: white;
+        border: none;
+        box-shadow: 0 8px 24px rgba(230, 57, 70, 0.3);
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 32px rgba(230, 57, 70, 0.4);
+    }
+    
+    .btn-outline {
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        color: white;
+        backdrop-filter: blur(10px);
+    }
+    
+    .btn-outline:hover {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: var(--primary-red);
+        transform: translateY(-3px);
+    }
+    
+    /* Feature Cards */
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin: 4rem 0;
+    }
+    
+    .feature-card {
+        background: linear-gradient(135deg, 
+            rgba(30, 30, 46, 0.9) 0%,
+            rgba(67, 97, 238, 0.1) 100%);
+        border-radius: 20px;
+        padding: 2.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        border-color: var(--primary-red);
+    }
+    
+    .feature-icon {
+        width: 70px;
+        height: 70px;
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        margin-bottom: 1.5rem;
+        background: linear-gradient(135deg, 
+            rgba(230, 57, 70, 0.2) 0%,
+            rgba(230, 57, 70, 0.1) 100%);
+        color: var(--primary-red);
+    }
+    
+    .feature-card h3 {
+        color: white;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .feature-card p {
+        color: rgba(255, 255, 255, 0.8);
+        line-height: 1.6;
+        margin-bottom: 1.5rem;
+    }
+    
+    /* Color-coded feature backgrounds */
+    .feature-analytics {
+        background: linear-gradient(135deg, 
+            rgba(30, 30, 46, 0.9) 0%,
+            rgba(230, 57, 70, 0.1) 100%);
+    }
+    
+    .feature-calculator {
+        background: linear-gradient(135deg, 
+            rgba(30, 30, 46, 0.9) 0%,
+            rgba(67, 97, 238, 0.1) 100%);
+    }
+    
+    .feature-workout {
+        background: linear-gradient(135deg, 
+            rgba(30, 30, 46, 0.9) 0%,
+            rgba(76, 201, 240, 0.1) 100%);
+    }
+    
+    .feature-tracking {
+        background: linear-gradient(135deg, 
+            rgba(30, 30, 46, 0.9) 0%,
+            rgba(255, 190, 11, 0.1) 100%);
+    }
+    
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin: 3rem 0;
+    }
+    
+    .stat-card {
+        background: linear-gradient(135deg, 
+            rgba(255, 255, 255, 0.05) 0%,
+            rgba(255, 255, 255, 0.02) 100%);
+        border-radius: 16px;
+        padding: 2rem;
+        text-align: center;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        transition: all 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        background: linear-gradient(135deg, 
+            rgba(230, 57, 70, 0.1) 0%,
+            rgba(230, 57, 70, 0.05) 100%);
+        border-color: var(--primary-red);
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #fff, var(--primary-red));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        line-height: 1;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.95rem;
+    }
+    
+    /* Today's Summary Card */
+    .today-summary {
+        background: linear-gradient(135deg, 
+            rgba(30, 30, 46, 0.95) 0%,
+            rgba(67, 97, 238, 0.15) 100%);
+        border-radius: 24px;
+        padding: 2.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        margin: 3rem 0;
+        backdrop-filter: blur(10px);
+    }
+    
+    .today-summary h2 {
+        color: white;
+        font-size: 2rem;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .today-summary h2 i {
+        color: var(--primary-red);
+    }
+    
+    .summary-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-item {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        padding: 1.5rem;
+        border-left: 4px solid var(--primary-red);
+        transition: all 0.3s ease;
+    }
+    
+    .stat-item:hover {
+        background: rgba(230, 57, 70, 0.1);
+        transform: translateX(8px);
+    }
+    
+    .stat-item p {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .stat-value {
+        color: white;
+        font-size: 2.2rem;
+        font-weight: 700;
+    }
+    
+    .stat-unit {
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 1rem;
+        margin-left: 0.25rem;
+    }
+    
+    .summary-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 3rem;
+        align-items: start;
+    }
+    
+    @media (max-width: 768px) {
+        .summary-content {
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+    }
+    
+    .target-section {
+        background: linear-gradient(135deg, 
+            rgba(230, 57, 70, 0.15) 0%,
+            rgba(230, 57, 70, 0.05) 100%);
+        border-radius: 16px;
+        padding: 1.5rem;
+        border: 1px solid rgba(230, 57, 70, 0.3);
+    }
+    
+    .target-section h3 {
+        color: white;
+        font-size: 1.2rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .target-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: white;
+        margin-bottom: 0.5rem;
+    }
+    
+    .target-desc {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.95rem;
+    }
+    
+    .recent-entries {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        padding: 1.5rem;
+    }
+    
+    .recent-entries h3 {
+        color: white;
+        font-size: 1.2rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .entry-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .entry-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .entry-item:last-child {
+        border-bottom: none;
+    }
+    
+    .entry-name {
+        color: white;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .entry-calories {
+        background: linear-gradient(135deg, 
+            rgba(230, 57, 70, 0.2) 0%,
+            rgba(230, 57, 70, 0.1) 100%);
+        color: var(--primary-red);
+        padding: 0.4rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    
+    /* Animation */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .hero h1 {
+            font-size: 2.5rem;
+        }
+        
+        .hero p {
+            font-size: 1.1rem;
+        }
+        
+        .hero .cta {
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .hero .cta a {
+            width: 100%;
+            max-width: 300px;
+        }
+        
+        .features-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    /* Feature Illustrations - UPDATED */
+    .feature-illustration {
+        margin-top: 1.5rem;
+        height: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+    
+    .illustration-icon-container {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, 
+            rgba(230, 57, 70, 0.15) 0%,
+            rgba(230, 57, 70, 0.05) 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        transition: all 0.3s ease;
+    }
+    
+    .feature-card:hover .illustration-icon-container {
+        transform: scale(1.1);
+        background: linear-gradient(135deg, 
+            rgba(230, 57, 70, 0.25) 0%,
+            rgba(230, 57, 70, 0.15) 100%);
+    }
+    
+    .illustration-icon-container::before {
+        content: '';
+        position: absolute;
+        top: -6px;
+        left: -6px;
+        right: -6px;
+        bottom: -6px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, 
+            rgba(230, 57, 70, 0.2) 0%,
+            transparent 70%);
+        z-index: -1;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .feature-card:hover .illustration-icon-container::before {
+        opacity: 1;
+    }
+    
+    .illustration-icon {
+        font-size: 2.8rem;
+        background: linear-gradient(135deg, #fff, var(--primary-red));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        transition: all 0.3s ease;
+    }
+    
+    .feature-card:hover .illustration-icon {
+        transform: scale(1.1);
+    }
+    
+    /* Color variations for different feature icons */
+    .feature-analytics .illustration-icon-container {
+        background: linear-gradient(135deg, 
+            rgba(230, 57, 70, 0.15) 0%,
+            rgba(230, 57, 70, 0.05) 100%);
+    }
+    
+    .feature-calculator .illustration-icon-container {
+        background: linear-gradient(135deg, 
+            rgba(67, 97, 238, 0.15) 0%,
+            rgba(67, 97, 238, 0.05) 100%);
+    }
+    
+    .feature-workout .illustration-icon-container {
+        background: linear-gradient(135deg, 
+            rgba(76, 201, 240, 0.15) 0%,
+            rgba(76, 201, 240, 0.05) 100%);
+    }
+    
+    .feature-tracking .illustration-icon-container {
+        background: linear-gradient(135deg, 
+            rgba(255, 190, 11, 0.15) 0%,
+            rgba(255, 190, 11, 0.05) 100%);
+    }
+</style>
+
+<!-- Hero Section -->
+<section class="hero">
+    <div class="hero-content">
+        <h1>Welcome to Holivra</h1>
+        <p>Track your calories, design workouts, and reach your goals with simple tools — free and lightweight.</p>
+        <div class="cta">
+            {% if user.is_authenticated %}
+                <a class="btn-primary" href="{% url 'dashboard' %}">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Open Dashboard
+                </a>
+                <a class="btn-outline" href="{% url 'logout' %}">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </a>
+            {% else %}
+                <a class="btn-primary" href="{% url 'register' %}">
+                    <i class="fas fa-rocket"></i>
+                    Get Started Free
+                </a>
+                <a class="btn-outline" href="{% url 'login' %}">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Login
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Features Grid -->
+<div class="features-grid">
+    <div class="feature-card feature-analytics">
+        <div class="feature-icon">
+            <i class="fas fa-chart-line"></i>
+        </div>
+        <h3>Track & Analyze</h3>
+        <p>Monitor your daily calories and macros with beautiful, interactive charts and progress tracking.</p>
+        <div class="feature-illustration">
+            <div class="illustration-icon-container">
+                <i class="fas fa-chart-bar illustration-icon"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="feature-card feature-calculator">
+        <div class="feature-icon">
+            <i class="fas fa-calculator"></i>
+        </div>
+        <h3>Smart Calculator</h3>
+        <p>Personalized TDEE calculations and macro targets based on your goals and activity level.</p>
+        <div class="feature-illustration">
+            <div class="illustration-icon-container">
+                <i class="fas fa-brain illustration-icon"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="feature-card feature-workout">
+        <div class="feature-icon">
+            <i class="fas fa-dumbbell"></i>
+        </div>
+        <h3>Workout Plans</h3>
+        <p>Custom workout suggestions and exercise tracking to complement your nutrition goals.</p>
+        <div class="feature-illustration">
+            <div class="illustration-icon-container">
+                <i class="fas fa-running illustration-icon"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if user.is_authenticated %}
+<!-- Today's Summary Section -->
+<section class="today-summary">
+    <h2><i class="fas fa-chart-pie"></i> Today's Summary</h2>
+    
+    <div class="summary-stats">
+        <div class="stat-item">
+            <p>Calories</p>
+            <div class="stat-value">
+                {{ totals.total_calories|default:0|floatformat:0 }}
+                <span class="stat-unit">kcal</span>
+            </div>
+        </div>
+        
+        <div class="stat-item">
+            <p>Protein</p>
+            <div class="stat-value">
+                {{ totals.total_protein|default:0|floatformat:1 }}
+                <span class="stat-unit">g</span>
+            </div>
+        </div>
+        
+        <div class="stat-item">
+            <p>Carbs</p>
+            <div class="stat-value">
+                {{ totals.total_carbs|default:0|floatformat:1 }}
+                <span class="stat-unit">g</span>
+            </div>
+        </div>
+        
+        <div class="stat-item">
+            <p>Fats</p>
+            <div class="stat-value">
+                {{ totals.total_fats|default:0|floatformat:1 }}
+                <span class="stat-unit">g</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="summary-content">
+        <div class="target-section">
+            <h3><i class="fas fa-bullseye"></i> Daily Target</h3>
+            <div class="target-value">
+                {{ tdee_target|default:'--' }}
+                <span style="font-size: 1rem; color: rgba(255,255,255,0.7);">kcal</span>
+            </div>
+            <p class="target-desc">{{ tdee_desc }}</p>
+            <div style="margin-top: 1.5rem;">
+                <a href="{% url 'dashboard' %}" class="btn-primary" style="padding: 0.8rem 1.5rem; font-size: 0.95rem;">
+                    <i class="fas fa-plus"></i> Add Food
+                </a>
+            </div>
+        </div>
+        
+        <div class="recent-entries">
+            <h3><i class="fas fa-history"></i> Recent Entries</h3>
+            <ul class="entry-list">
+                {% for e in entries|slice:"0:5" %}
+                    <li class="entry-item">
+                        <div class="entry-name">
+                            <i class="fas fa-utensils"></i>
+                            <span>{{ e.food_name|truncatechars:25 }}</span>
+                        </div>
+                        <span class="entry-calories">{{ e.calories }} kcal</span>
+                    </li>
+                {% empty %}
+                    <li class="entry-item" style="color: rgba(255,255,255,0.7); text-align: center; justify-content: center;">
+                        <i class="fas fa-clipboard-list"></i>
+                        <span>No entries yet</span>
+                    </li>
+                {% endfor %}
+            </ul>
+            {% if entries %}
+                <div style="text-align: center; margin-top: 1rem;">
+                    <a href="{% url 'dashboard' %}" style="color: var(--primary-red); text-decoration: none; font-size: 0.9rem;">
+                        View all entries <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Quick Stats -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-number">{{ entries.count }}</div>
+        <div class="stat-label">Today's Entries</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-number">
+            {% if totals.total_calories and tdee_target and tdee_target != '--' %}
+                {% with target=tdee_target|add:"0" current=totals.total_calories %}
+                    {% widthratio current target 100 %}%
+                {% endwith %}
+            {% else %}
+                --
+            {% endif %}
+        </div>
+        <div class="stat-label">Target Progress</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-number">
+            {% if totals.total_protein %}
+                {{ totals.total_protein|floatformat:0 }}
+            {% else %}
+                0
+            {% endif %}g
+        </div>
+        <div class="stat-label">Protein Today</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-number">
+            {% if entries.count > 0 %}
+                {{ entries.count }}
+            {% else %}
+                0
+            {% endif %}
+        </div>
+        <div class="stat-label">Active Days</div>
+    </div>
+</div>
+
+{% else %}
+<!-- Features for Non-Authenticated Users -->
+<div class="features-grid">
+    <div class="feature-card feature-tracking">
+        <div class="feature-icon">
+            <i class="fas fa-fire"></i>
+        </div>
+        <h3>Calorie Tracking</h3>
+        <p>Log your meals with our intuitive interface and track your daily calorie intake effortlessly.</p>
+        <div class="feature-illustration">
+            <div class="illustration-icon-container">
+                <i class="fas fa-utensils illustration-icon"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="feature-card feature-analytics">
+        <div class="feature-icon">
+            <i class="fas fa-chart-bar"></i>
+        </div>
+        <h3>Visual Analytics</h3>
+        <p>Beautiful charts and graphs to visualize your progress and stay motivated on your journey.</p>
+        <div class="feature-illustration">
+            <div class="illustration-icon-container">
+                <i class="fas fa-chart-line illustration-icon"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="feature-card feature-workout">
+        <div class="feature-icon">
+            <i class="fas fa-heartbeat"></i>
+        </div>
+        <h3>Health Insights</h3>
+        <p>Get personalized recommendations based on your goals, activity level, and progress.</p>
+        <div class="feature-illustration">
+            <div class="illustration-icon-container">
+                <i class="fas fa-heartbeat illustration-icon"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Call to Action -->
+<section class="hero" style="min-height: auto; padding: 4rem 2rem; margin-top: 2rem; background: linear-gradient(135deg, rgba(10,10,10,0.9), rgba(230,57,70,0.3));">
+    <div style="max-width: 800px; margin: 0 auto; text-align: center;">
+        <h2 style="font-size: 2.5rem; margin-bottom: 1.5rem;">Start Your Journey Today</h2>
+        <p style="font-size: 1.2rem; color: rgba(255,255,255,0.9); margin-bottom: 2.5rem;">
+            Join thousands of users who have transformed their health with Holivra's simple yet powerful tools.
+        </p>
+        <div class="cta">
+            <a class="btn-primary" href="{% url 'register' %}" style="min-width: 220px;">
+                <i class="fas fa-user-plus"></i>
+                Create Free Account
+            </a>
+            <a class="btn-outline" href="{% url 'login' %}" style="min-width: 220px;">
+                <i class="fas fa-sign-in-alt"></i>
+                Sign In
+            </a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Testimonials Section -->
+<div class="features-grid" style="margin-top: 4rem;">
+    <div class="feature-card feature-analytics">
+        <div class="feature-icon">
+            <i class="fas fa-star"></i>
+        </div>
+        <h3>Trusted by Fitness Enthusiasts</h3>
+        <p>"Holivra helped me lose 15kg in 3 months. The tracking tools are incredibly intuitive!"</p>
+        <div style="margin-top: 1.5rem; display: flex; align-items: center; gap: 1rem;">
+            <div style="width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-red), #d62839); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">SJ</div>
+            <div>
+                <div style="color: white; font-weight: 600;">Sarah J.</div>
+                <div style="color: rgba(255,255,255,0.6); font-size: 0.9rem;">Lost 15kg</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="feature-card feature-workout">
+        <div class="feature-icon">
+            <i class="fas fa-dumbbell"></i>
+        </div>
+        <h3>Perfect for Beginners</h3>
+        <p>"As someone new to fitness, the TDEE calculator and workout suggestions were game-changers!"</p>
+        <div style="margin-top: 1.5rem; display: flex; align-items: center; gap: 1rem;">
+            <div style="width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, var(--blue), #4895ef); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">MK</div>
+            <div>
+                <div style="color: white; font-weight: 600;">Mike K.</div>
+                <div style="color: rgba(255,255,255,0.6); font-size: 0.9rem;">Gained 5kg muscle</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="feature-card feature-calculator">
+        <div class="feature-icon">
+            <i class="fas fa-trophy"></i>
+        </div>
+        <h3>Complete Transformation</h3>
+        <p>"From tracking meals to planning workouts, Holivra has everything I need in one place."</p>
+        <div style="margin-top: 1.5rem; display: flex; align-items: center; gap: 1rem;">
+            <div style="width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, var(--teal), #38b6ff); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">AL</div>
+            <div>
+                <div style="color: white; font-weight: 600;">Alex L.</div>
+                <div style="color: rgba(255,255,255,0.6); font-size: 0.9rem;">Maintained for 1 year</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Key Features -->
+<div class="today-summary" style="margin-top: 4rem;">
+    <h2><i class="fas fa-check-circle"></i> Why Choose Holivra?</h2>
+    
+    <div class="summary-content">
+        <div>
+            <div style="margin-bottom: 2rem;">
+                <h3 style="color: white; display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                    <i class="fas fa-bolt" style="color: var(--primary-red);"></i>
+                    Completely Free
+                </h3>
+                <p style="color: rgba(255,255,255,0.8);">No subscriptions, no hidden fees. All our core features are completely free to use.</p>
+            </div>
+            
+            <div style="margin-bottom: 2rem;">
+                <h3 style="color: white; display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                    <i class="fas fa-mobile-alt" style="color: var(--blue);"></i>
+                    Mobile-Friendly
+                </h3>
+                <p style="color: rgba(255,255,255,0.8);">Access your dashboard from any device. Track your progress on the go.</p>
+            </div>
+        </div>
+        
+        <div>
+            <div style="margin-bottom: 2rem;">
+                <h3 style="color: white; display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                    <i class="fas fa-shield-alt" style="color: var(--teal);"></i>
+                    Privacy Focused
+                </h3>
+                <p style="color: rgba(255,255,255,0.8);">Your data stays yours. We don't sell or share your personal information.</p>
+            </div>
+            
+            <div style="margin-bottom: 2rem;">
+                <h3 style="color: white; display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                    <i class="fas fa-lightbulb" style="color: var(--yellow);"></i>
+                    Beginner Friendly
+                </h3>
+                <p style="color: rgba(255,255,255,0.8);">Simple interface with guided tools to help you start your fitness journey.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Add subtle animations
+    document.addEventListener('DOMContentLoaded', function() {
+        // Animate feature cards on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px'
+        };
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+        
+        // Apply to feature cards
+        document.querySelectorAll('.feature-card').forEach(card => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(card);
+        });
+        
+        // Apply to stat cards
+        document.querySelectorAll('.stat-card').forEach(card => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(card);
+        });
+        
+        // Add hover effects to illustration icons
+        document.querySelectorAll('.illustration-icon-container').forEach(iconContainer => {
+            iconContainer.addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.1) rotate(5deg)';
+                this.querySelector('.illustration-icon').style.transform = 'scale(1.2)';
+            });
+            
+            iconContainer.addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1) rotate(0deg)';
+                this.querySelector('.illustration-icon').style.transform = 'scale(1)';
+            });
+        });
+        
+        // Animate hero content
+        const heroContent = document.querySelector('.hero-content');
+        if (heroContent) {
+            setTimeout(() => {
+                heroContent.style.opacity = '1';
+                heroContent.style.transform = 'translateY(0)';
+            }, 100);
+        }
+        
+        // Add parallax effect to hero
+        window.addEventListener('scroll', function() {
+            const scrolled = window.pageYOffset;
+            const hero = document.querySelector('.hero');
+            if (hero) {
+                const rate = scrolled * -0.5;
+                hero.style.backgroundPosition = `center ${rate}px`;
+            }
+        });
+        
+        // Add counter animation to stats
+        const statNumbers = document.querySelectorAll('.stat-number');
+        statNumbers.forEach(stat => {
+            const originalText = stat.textContent;
+            if (originalText && originalText !== '--' && originalText !== '0') {
+                // Animate number counting
+                const value = parseInt(originalText.replace(/[^0-9]/g, ''));
+                if (!isNaN(value) && value > 0) {
+                    let count = 0;
+                    const duration = 2000;
+                    const increment = value / (duration / 16);
+                    
+                    const updateCount = () => {
+                        count += increment;
+                        if (count < value) {
+                            stat.textContent = Math.floor(count) + (originalText.includes('g') ? 'g' : originalText.includes('%') ? '%' : '');
+                            requestAnimationFrame(updateCount);
+                        } else {
+                            stat.textContent = originalText;
+                        }
+                    };
+                    
+                    // Trigger on scroll into view
+                    const statObserver = new IntersectionObserver((entries) => {
+                        if (entries[0].isIntersecting) {
+                            updateCount();
+                            statObserver.unobserve(stat);
+                        }
+                    });
+                    
+                    statObserver.observe(stat);
+                }
+            }
+        });
+        
+        // Add pulsating animation to hero CTA buttons
+        const ctaButtons = document.querySelectorAll('.btn-primary');
+        ctaButtons.forEach(btn => {
+            setInterval(() => {
+                btn.style.boxShadow = '0 8px 24px rgba(230, 57, 70, 0.4)';
+                setTimeout(() => {
+                    btn.style.boxShadow = '0 8px 24px rgba(230, 57, 70, 0.3)';
+                }, 1000);
+            }, 3000);
+        });
+    });
+</script>
+{% endblock %}
