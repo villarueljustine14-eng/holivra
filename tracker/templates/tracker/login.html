@@ -1,0 +1,706 @@
+{% extends 'tracker/base.html' %}
+
+{% block content %}
+<style>
+    .login-container {
+        min-height: 80vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        background: linear-gradient(135deg, 
+            rgba(10, 10, 10, 0.95) 0%,
+            rgba(230, 57, 70, 0.15) 100%);
+        border-radius: 24px;
+        position: relative;
+        overflow: hidden;
+        margin: 2rem;
+    }
+    
+    .login-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at 70% 30%, 
+            rgba(230, 57, 70, 0.1) 0%, 
+            transparent 70%);
+        pointer-events: none;
+    }
+    
+    .login-card {
+        background: linear-gradient(135deg, 
+            rgba(30, 30, 46, 0.95) 0%,
+            rgba(67, 97, 238, 0.15) 100%);
+        border-radius: 24px;
+        padding: 3rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        width: 100%;
+        max-width: 450px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        position: relative;
+        z-index: 2;
+        animation: fadeInUp 0.6s ease-out;
+    }
+    
+    .login-header {
+        text-align: center;
+        margin-bottom: 2.5rem;
+    }
+    
+    .login-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 20px;
+        background: linear-gradient(135deg, var(--primary-red), #d62839);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        font-size: 2.5rem;
+        color: white;
+        box-shadow: 0 8px 24px rgba(230, 57, 70, 0.3);
+    }
+    
+    .login-header h2 {
+        background: linear-gradient(135deg, #fff 0%, var(--primary-red) 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        font-size: 2.2rem;
+        margin: 0 0 0.5rem 0;
+    }
+    
+    .login-subtitle {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 1rem;
+        margin: 0;
+    }
+    
+    /* Form Styling */
+    .login-form {
+        margin-top: 2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+
+    .form-group {
+        margin-bottom: 0;
+        position: relative;
+        display: block;
+        width: 100%;
+        max-width: 420px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .form-group label {
+        display: block;
+        color: white;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+        text-align: center;
+    }
+    
+    .form-group label i {
+        color: var(--primary-red);
+        width: 20px;
+        text-align: center;
+    }
+    
+    .form-input {
+        width: 100%;
+        max-width: 420px;
+        padding: 1rem 1.25rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        color: white;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        text-align: center;
+        box-sizing: border-box;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .form-input:focus {
+        outline: none;
+        border-color: var(--primary-red);
+        box-shadow: 0 0 0 3px rgba(230, 57, 70, 0.1);
+        background: rgba(255, 255, 255, 0.08);
+    }
+    
+    .form-input::placeholder {
+        color: rgba(255, 255, 255, 0.5);
+    }
+    
+    .password-toggle {
+        position: absolute;
+        right: 0.9rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: rgba(255, 255, 255, 0.6);
+        cursor: pointer;
+        font-size: 1rem;
+        transition: color 0.3s ease;
+        padding: 0.25rem;
+        line-height: 1;
+    }
+    
+    .password-toggle:hover {
+        color: var(--primary-red);
+    }
+    
+    /* Error Messages */
+    .error-messages {
+        background: rgba(230, 57, 70, 0.1);
+        border: 1px solid rgba(230, 57, 70, 0.3);
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .error-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .error-list li {
+        color: var(--primary-red);
+        font-size: 0.9rem;
+        padding: 0.25rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .error-list li i {
+        font-size: 0.8rem;
+    }
+    
+    /* Submit Button */
+    .btn-login {
+        background: linear-gradient(135deg, var(--primary-red), #d62839);
+        color: white;
+        border: none;
+        padding: 1rem;
+        border-radius: 12px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        transition: all 0.3s ease;
+        margin-top: 1rem;
+    }
+    
+    .btn-login:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(230, 57, 70, 0.3);
+    }
+    
+    .btn-login:active {
+        transform: translateY(0);
+    }
+    
+    /* Remember Me */
+    .remember-me {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin: 1rem 0;
+    }
+    
+    .remember-me input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        border-radius: 4px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        background: rgba(255, 255, 255, 0.05);
+        cursor: pointer;
+    }
+    
+    .remember-me label {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.95rem;
+        cursor: pointer;
+        margin: 0;
+    }
+    
+    /* Forgot Password */
+    .forgot-password {
+        text-align: right;
+        margin-bottom: 1.5rem;
+    }
+    
+    .forgot-password a {
+        color: var(--primary-red);
+        text-decoration: none;
+        font-size: 0.9rem;
+        transition: color 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .forgot-password a:hover {
+        color: #fff;
+        text-decoration: underline;
+    }
+    
+    /* Register Link */
+    .register-link {
+        text-align: center;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .register-link p {
+        color: rgba(255, 255, 255, 0.8);
+        margin: 0 0 1rem 0;
+    }
+    
+    .btn-register {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 0.875rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        transition: all 0.3s ease;
+        width: auto;
+        max-width: 360px;
+        margin: 0 auto;
+    }
+    
+    .btn-register:hover {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: var(--primary-red);
+        transform: translateY(-2px);
+    }
+    
+    /* Social Login */
+    .social-login {
+        margin-top: 2rem;
+        text-align: center;
+    }
+    
+    .social-divider {
+        display: flex;
+        align-items: center;
+        margin: 1.5rem 0;
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 0.9rem;
+    }
+    
+    .social-divider::before,
+    .social-divider::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .social-divider span {
+        padding: 0 1rem;
+    }
+    
+    .social-buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        width: 100%;
+    }
+    
+    .social-btn {
+        padding: 0.875rem;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.05);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        width: 100%;
+    }
+    
+    .social-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: var(--primary-red);
+    }
+    
+    .social-btn.google i {
+        color: #EA4335;
+    }
+    
+    .social-btn.github i {
+        color: #333;
+    }
+    
+    /* Demo Login */
+    .demo-login {
+        margin-top: 1.5rem;
+        text-align: center;
+    }
+    
+    .demo-btn {
+        background: linear-gradient(135deg, rgba(67, 97, 238, 0.2), rgba(67, 97, 238, 0.1));
+        color: var(--blue);
+        border: 1px solid rgba(67, 97, 238, 0.3);
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        font-size: 0.9rem;
+    }
+    
+    .demo-btn:hover {
+        background: linear-gradient(135deg, rgba(67, 97, 238, 0.3), rgba(67, 97, 238, 0.2));
+    }
+    
+    /* Animation */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Responsive */
+    @media (max-width: 576px) {
+        .login-container {
+            margin: 1rem;
+            padding: 1rem;
+        }
+        
+        .login-card {
+            padding: 2rem;
+        }
+        
+        .login-icon {
+            width: 60px;
+            height: 60px;
+            font-size: 2rem;
+        }
+        
+        .login-header h2 {
+            font-size: 1.8rem;
+        }
+        
+        .social-buttons {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="login-container">
+    <div class="login-card">
+        <!-- Header -->
+        <div class="login-header">
+            <div class="login-icon">
+                <i class="fas fa-sign-in-alt"></i>
+            </div>
+            <h2>Welcome Back</h2>
+            <p class="login-subtitle">Sign in to continue your fitness journey</p>
+        </div>
+        
+        <!-- Error Messages -->
+        {% if form.errors %}
+        <div class="error-messages">
+            <ul class="error-list">
+                {% for field, errors in form.errors.items %}
+                    {% for error in errors %}
+                        <li><i class="fas fa-exclamation-circle"></i> {{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+                {% if form.non_field_errors %}
+                    {% for error in form.non_field_errors %}
+                        <li><i class="fas fa-exclamation-circle"></i> {{ error }}</li>
+                    {% endfor %}
+                {% endif %}
+            </ul>
+        </div>
+        {% endif %}
+        
+        <!-- Login Form -->
+        <form method="post" class="login-form">
+            {% csrf_token %}
+            
+            <!-- Username Field -->
+            <div class="form-group">
+                <label for="id_username">
+                    <i class="fas fa-user"></i> Username
+                </label>
+                <input type="text" 
+                       name="username" 
+                       id="id_username" 
+                       class="form-input" 
+                       placeholder="Enter your username"
+                       value="{{ form.username.value|default:'' }}"
+                       required>
+                {% if form.username.errors %}
+                    <div style="color: var(--primary-red); font-size: 0.875rem; margin-top: 0.5rem;">
+                        {% for error in form.username.errors %}
+                            <i class="fas fa-exclamation-circle"></i> {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Password Field -->
+            <div class="form-group">
+                <label for="id_password">
+                    <i class="fas fa-lock"></i> Password
+                </label>
+                <input type="password" 
+                       name="password" 
+                       id="id_password" 
+                       class="form-input" 
+                       placeholder="Enter your password"
+                       required>
+                <button type="button" class="password-toggle" id="password-toggle">
+                    <i class="fas fa-eye"></i>
+                </button>
+                {% if form.password.errors %}
+                    <div style="color: var(--primary-red); font-size: 0.875rem; margin-top: 0.5rem;">
+                        {% for error in form.password.errors %}
+                            <i class="fas fa-exclamation-circle"></i> {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Remember Me & Forgot Password -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin: 1.5rem 0;">
+                <div class="remember-me">
+                    <input type="checkbox" name="remember_me" id="remember_me">
+                    <label for="remember_me">Remember me</label>
+                </div>
+                
+                <div class="forgot-password">
+                    <a href="#">
+                        <i class="fas fa-key"></i> Forgot password?
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Submit Button -->
+            <button type="submit" class="btn-login">
+                <i class="fas fa-sign-in-alt"></i>
+                Sign In
+            </button>
+        </form>
+        
+        <!-- Social Login removed per request -->
+        
+        <!-- Demo Account (Optional) -->
+        <div class="demo-login">
+            <a href="#" class="demo-btn">
+                <i class="fas fa-user-secret"></i>
+                Try Demo Account
+            </a>
+        </div>
+        
+        <!-- Register Link -->
+        <div class="register-link">
+            <p>Don't have an account?</p>
+            <a href="{% url 'register' %}" class="btn-register">
+                <i class="fas fa-user-plus"></i>
+                Create New Account
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Password toggle functionality
+        const passwordToggle = document.getElementById('password-toggle');
+        const passwordInput = document.getElementById('id_password');
+        
+        if (passwordToggle && passwordInput) {
+            passwordToggle.addEventListener('click', function() {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                this.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+            });
+        }
+        
+    // Form validation
+    const form = document.querySelector('.login-form');
+    const usernameInput = document.getElementById('id_username');
+        
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                let valid = true;
+                
+                // Validate username
+                if (!usernameInput.value.trim()) {
+                    showError(usernameInput, 'Username is required');
+                    valid = false;
+                } else {
+                    clearError(usernameInput);
+                }
+                
+                // Validate password
+                if (!passwordInput.value.trim()) {
+                    showError(passwordInput, 'Password is required');
+                    valid = false;
+                } else if (passwordInput.value.length < 8) {
+                    showError(passwordInput, 'Password must be at least 8 characters');
+                    valid = false;
+                } else {
+                    clearError(passwordInput);
+                }
+                
+                if (!valid) {
+                    e.preventDefault();
+                } else {
+                    // Show loading state
+                    const submitBtn = this.querySelector('.btn-login');
+                    const originalText = submitBtn.innerHTML;
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing In...';
+                    submitBtn.disabled = true;
+                    
+                    // Re-enable after 3 seconds (in case of error)
+                    setTimeout(() => {
+                        submitBtn.innerHTML = originalText;
+                        submitBtn.disabled = false;
+                    }, 3000);
+                }
+            });
+        }
+        
+        function showError(input, message) {
+            clearError(input);
+            
+            const errorDiv = document.createElement('div');
+            errorDiv.style.color = 'var(--primary-red)';
+            errorDiv.style.fontSize = '0.875rem';
+            errorDiv.style.marginTop = '0.5rem';
+            errorDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
+            
+            input.parentNode.appendChild(errorDiv);
+            input.style.borderColor = 'var(--primary-red)';
+            input.style.boxShadow = '0 0 0 3px rgba(230, 57, 70, 0.1)';
+        }
+        
+        function clearError(input) {
+            // Remove existing error messages
+            const existingError = input.parentNode.querySelector('div[style*="color: var(--primary-red)"]');
+            if (existingError) {
+                existingError.remove();
+            }
+            
+            // Reset input styling
+            input.style.borderColor = '';
+            input.style.boxShadow = '';
+        }
+        
+        // Add focus effects
+        const inputs = document.querySelectorAll('.form-input');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.style.borderColor = 'var(--primary-red)';
+                this.style.boxShadow = '0 0 0 3px rgba(230, 57, 70, 0.1)';
+                this.style.background = 'rgba(255, 255, 255, 0.08)';
+            });
+            
+            input.addEventListener('blur', function() {
+                if (!this.value) {
+                    this.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                }
+                this.style.boxShadow = '';
+                this.style.background = 'rgba(255, 255, 255, 0.05)';
+            });
+        });
+        
+        // Auto-focus username field
+        if (usernameInput) {
+            usernameInput.focus();
+        }
+        
+        // Social login buttons (demo functionality)
+        const socialButtons = document.querySelectorAll('.social-btn');
+        socialButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                alert('Social login integration would be implemented here.\nFor now, please use the main login form.');
+            });
+        });
+        
+        // Demo account button
+        const demoBtn = document.querySelector('.demo-btn');
+        if (demoBtn) {
+            demoBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('id_username').value = 'demo_user';
+                document.getElementById('id_password').value = 'demo_password123';
+                
+                // Show notification
+                const notification = document.createElement('div');
+                notification.style.position = 'fixed';
+                notification.style.bottom = '20px';
+                notification.style.right = '20px';
+                notification.style.background = 'linear-gradient(135deg, var(--blue), #4895ef)';
+                notification.style.color = 'white';
+                notification.style.padding = '1rem 1.5rem';
+                notification.style.borderRadius = '12px';
+                notification.style.boxShadow = '0 8px 24px rgba(0,0,0,0.3)';
+                notification.style.zIndex = '1000';
+                notification.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <i class="fas fa-info-circle"></i>
+                        <div>
+                            <strong>Demo Credentials Filled!</strong><br>
+                            <small>Click Sign In to continue</small>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(notification);
+                
+                // Remove after 3 seconds
+                setTimeout(() => {
+                    notification.style.opacity = '0';
+                    notification.style.transform = 'translateY(20px)';
+                    notification.style.transition = 'all 0.3s ease';
+                    setTimeout(() => notification.remove(), 300);
+                }, 3000);
+            });
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,29 @@
+<div class="card">
+    <h2>Recommended Workouts</h2>
+    <p>Based on your activity level we suggest the following sessions. Click a workout for a quick example routine.</p>
+    <div style="display:grid; gap:10px;">
+        {% for w in suggestions %}
+        <div class="card workout-card" style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <h3 style="margin:0">{{ w.name }}</h3>
+                <small>{{ w.type }} • {{ w.time_min }} min</small>
+            </div>
+            <div>
+                <button onclick="alert('Example routine for {{ w.name|escapejs }}:\n- Warmup 5 min\n- Main set {{ w.main_time }} min\n- Cooldown 5 min')">View</button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% if profile %}
+<div class="card">
+    <h2>Tips</h2>
+    <ul>
+        <li>Try mixing cardio and strength 2-3 times per week.</li>
+        <li>Progressively increase intensity for improvements.</li>
+        <li>Rest and recovery are as important as training.</li>
+    </ul>
+    <p>Activity multiplier: {{ profile.activity_level }}</p>
+</div>
+{% endif %}
